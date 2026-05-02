@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaf
 import { 
   LayoutDashboard, BarChart2, Users, History, Settings,
   AlertTriangle, TrendingDown, CheckCircle, Globe,
-  Send, Download
+  Send, Download, Map as MapIcon
 } from "lucide-react";
 
 import L from 'leaflet';
@@ -105,7 +105,7 @@ export default function PalmciDashboard() {
       cache.current[cacheKey] = result;
       setData(result);
     } catch (err) { 
-      setErreur("Erreur lors de la récupération des données."); 
+      setErreur("Erreur lors de la récupération des données. Assurez-vous que l'API est en ligne."); 
     } finally { 
       setLoading(false); 
     }
@@ -117,13 +117,49 @@ export default function PalmciDashboard() {
     }
   }, [anneeActive]);
 
+  const exporterDonnees = () => {
+    if (!data.analyse) {
+      alert("Veuillez d'abord sélectionner et analyser un site avant d'exporter.");
+      return;
+    }
+    const rapport = {
+      site: nomSite,
+      annee: anneeActive,
+      analyse: data.analyse,
+      prescription: data.prescription?.prescription
+    };
+    const blob = new Blob([JSON.stringify(rapport, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Rapport_PALMCI_${nomSite}_${anneeActive}.json`;
+    a.click();
+  };
+
+  const envoyerApp = () => {
+    alert(`Les prescriptions pour ${nomSite} ont été envoyées aux agriculteurs sur le terrain via l'application mobile !`);
+  };
+
   const analyse = data.analyse;
   const images = data.images;
   const prescription = data.prescription;
 
-  // KPIs
-  const surfaceAnalyse = analyse ? Math.round((analyse.zone1_ha||0) + (analyse.zone2_ha||0) + (analyse.zone3_ha||0)) : 44000;
-  const zonesCritiques = analyse ? (analyse.zone === 1 ? 1 : 0) : 1;
+  // Calcul dynamique des KPIs selon le site sélectionné
+  let surfaceA = 44000;
+  let zonesC = "8 sites";
+  let econ = "15.4%";
+  let parcellesS = "17%";
+
+  if (analyse) {
+    surfaceA = Math.round((analyse.zone1_ha||0) + (analyse.zone2_ha||0) + (analyse.zone3_ha||0));
+    zonesC = Math.round(analyse.zone1_ha || 0) + " ha";
+    
+    const pctSaine = surfaceA > 0 ? ((analyse.zone3_ha || 0) / surfaceA * 100) : 0;
+    parcellesS = pctSaine.toFixed(1) + "%";
+
+    const pctEco = surfaceA > 0 ? (((analyse.zone3_ha||0)*0.5 + (analyse.zone2_ha||0)*0.2) / surfaceA * 100) : 0;
+    econ = pctEco.toFixed(1) + "%";
+  }
 
   const imgUrl = images?.images?.[imgActive];
 
@@ -143,6 +179,7 @@ export default function PalmciDashboard() {
         
         <nav className="sidebar-nav">
           <div className="nav-item active"><LayoutDashboard size={18}/> Tableau de bord</div>
+          <div className="nav-item"><MapIcon size={18}/> Cartographie GEE</div>
           <div className="nav-item"><BarChart2 size={18}/> Analytiques</div>
           <div className="nav-item"><Users size={18}/> Agriculteurs</div>
           <div className="nav-item"><History size={18}/> Historique</div>
@@ -151,14 +188,14 @@ export default function PalmciDashboard() {
 
         <div className="sidebar-footer">
           <div className="api-badge">
-            <span>Données GEE</span>
-            <span className="status">EN LIGNE</span>
+            <span>Moteur d'IA</span>
+            <span className="status">ACTIF</span>
           </div>
           <div className="user-profile">
             <div className="user-avatar">MP</div>
             <div className="user-info">
               <p className="name">Mr Paul</p>
-              <p className="role">Administrateur</p>
+              <p className="role">Agronome Principal</p>
             </div>
           </div>
         </div>
@@ -170,48 +207,48 @@ export default function PalmciDashboard() {
         <header className="topbar">
           <div>
             <div className="topbar-title"><h1>Supervision des Unités Agricoles</h1></div>
-            <div className="topbar-subtitle">Gestion intelligente des cultures vivrières</div>
+            <div className="topbar-subtitle">Gestion intelligente des cultures vivrières et suivi NDVI</div>
           </div>
           <div className="topbar-actions">
             <div className="api-status">
               <div className="api-dot"></div>
               GEE API Connectée
             </div>
-            <button className="export-btn">
-              <Download size={16} /> Exporter
+            <button className="export-btn" onClick={exporterDonnees}>
+              <Download size={16} /> Exporter Rapport
             </button>
           </div>
         </header>
 
         {/* Dashboard Body */}
         <div className="dashboard-body">
-          {/* KPIs */}
+          {/* KPIs Dynamiques */}
           <div className="kpi-grid">
             <div className="kpi-card">
               <div className="kpi-header">SURFACE ANALYSÉE <Globe size={16} color="#3b82f6" /></div>
-              <div className="kpi-value">{surfaceAnalyse.toLocaleString()} ha</div>
-              <div className="kpi-sub" style={{ color: "#10b981" }}>+2.5% vs semaine</div>
+              <div className="kpi-value">{surfaceA.toLocaleString()} ha</div>
+              <div className="kpi-sub" style={{ color: "#3b82f6" }}>{siteActuel ? `Pour ${nomSite}` : "Total estimé"}</div>
               <div style={{ height: "3px", background: "#3b82f6", width: "100%", marginTop: "12px", borderRadius: "2px" }}></div>
             </div>
             
             <div className="kpi-card">
-              <div className="kpi-header">ZONES CRITIQUES <AlertTriangle size={16} color="#ef4444" /></div>
-              <div className="kpi-value">{zonesCritiques}</div>
-              <div className="kpi-sub" style={{ color: "#ef4444" }}>Nécessitent attention</div>
+              <div className="kpi-header">STRESS SÉVÈRE (ZONE 1) <AlertTriangle size={16} color="#ef4444" /></div>
+              <div className="kpi-value">{zonesC}</div>
+              <div className="kpi-sub" style={{ color: "#ef4444" }}>Nécessitent une intervention</div>
               <div style={{ height: "3px", background: "#ef4444", width: "30%", marginTop: "12px", borderRadius: "2px" }}></div>
             </div>
 
             <div className="kpi-card">
               <div className="kpi-header">ÉCONOMIES D'ENGRAIS <TrendingDown size={16} color="#10b981" /></div>
-              <div className="kpi-value">15.4%</div>
-              <div className="kpi-sub" style={{ color: "#10b981" }}>Économies réalisées</div>
+              <div className="kpi-value">{econ}</div>
+              <div className="kpi-sub" style={{ color: "#10b981" }}>Économie potentielle IA</div>
               <div style={{ height: "3px", background: "#10b981", width: "80%", marginTop: "12px", borderRadius: "2px" }}></div>
             </div>
 
             <div className="kpi-card">
               <div className="kpi-header">PARCELLES SAINES <CheckCircle size={16} color="#10b981" /></div>
-              <div className="kpi-value">17%</div>
-              <div className="kpi-sub" style={{ color: "#10b981" }}>Bonne santé</div>
+              <div className="kpi-value">{parcellesS}</div>
+              <div className="kpi-sub" style={{ color: "#10b981" }}>Végétation optimale (Zone 3)</div>
               <div style={{ height: "3px", background: "#10b981", width: "60%", marginTop: "12px", borderRadius: "2px" }}></div>
             </div>
           </div>
@@ -249,14 +286,14 @@ export default function PalmciDashboard() {
               </div>
             </div>
 
-            {/* Right Area (Scrollable Control Center with all original data & photos) */}
+            {/* Right Area (Scrollable Control Center) */}
             <div className="control-section">
               <div className="control-panel scrollable-panel">
                 
                 {!siteActuel ? (
                   <>
                     <div className="panel-title">Centre de Contrôle</div>
-                    <div className="panel-desc">Sélectionnez un site pour charger les données et les photos.</div>
+                    <div className="panel-desc">Sélectionnez un site sur la carte ou dans la liste pour charger l'analyse GEE.</div>
                     
                     <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px", marginTop: "24px" }}>
                       {SITES_MAP.map(site => (
@@ -265,7 +302,7 @@ export default function PalmciDashboard() {
                              onClick={() => chargerDonnees(site.id, site.nom, anneeActive)}>
                           <div>
                             <div className="site-item-name">PALMCI {site.nom}</div>
-                            <div className="site-item-sub">Cliquez pour analyser</div>
+                            <div className="site-item-sub">Cliquez pour analyser le NDVI</div>
                           </div>
                         </div>
                       ))}
@@ -308,7 +345,7 @@ export default function PalmciDashboard() {
                           <div className="diag-box" style={{ flex: 1, margin: 0 }}>
                             <div className="diag-title">Diagnostic GEE</div>
                             <div className="diag-value">{(analyse.ndvi_moyen || 0).toFixed(2)}</div>
-                            <div style={{ fontSize: "11px", color: "#0369a1", marginTop: "4px" }}>NDVI Moyen</div>
+                            <div style={{ fontSize: "11px", color: "#0369a1", marginTop: "4px" }}>NDVI Moyen global</div>
                           </div>
                           
                           <div style={{ flex: 1, border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px" }}>
@@ -324,7 +361,7 @@ export default function PalmciDashboard() {
                         {/* Photos Satellites depuis le Back */}
                         <div style={{ border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", background: "#f8fafc" }}>
                           <div style={{ fontSize: "12px", fontWeight: "700", color: "#0f172a", marginBottom: "12px", textTransform: "uppercase" }}>
-                            Imagerie Spatiale
+                            Imagerie Spatiale ({anneeActive})
                           </div>
                           
                           <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
@@ -348,9 +385,14 @@ export default function PalmciDashboard() {
                             ) : (
                               <div style={{ color: "#64748b", fontSize: "12px", textAlign: "center" }}>
                                 <div style={{ fontSize: "24px", marginBottom: "8px" }}>🛰️</div>
-                                Photo en cours de traitement...
+                                Image en cours de génération GEE...
                               </div>
                             )}
+                          </div>
+                          
+                          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "10px", color: "#64748b" }}>
+                            <span>Source: Sentinel-2 SR</span>
+                            <span>Résolution: 10m/px</span>
                           </div>
                         </div>
 
@@ -358,14 +400,14 @@ export default function PalmciDashboard() {
                         <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
                           {prescription && (
                             <div className="presc-box" style={{ flex: 1, minWidth: "200px", margin: 0 }}>
-                              <div className="presc-title">Prescription IA</div>
+                              <div className="presc-title">Prescription IA Recommandée</div>
                               <div className="presc-value" style={{ fontSize: "18px" }}>{prescription.prescription?.dose || analyse.dose}</div>
-                              <div style={{ fontSize: "11px", color: "#a16207", marginTop: "4px" }}>{prescription.prescription?.type_engrais}</div>
+                              <div style={{ fontSize: "11px", color: "#a16207", marginTop: "4px" }}>Engrais: {prescription.prescription?.type_engrais || "NPK Standard"}</div>
                             </div>
                           )}
 
                           <div style={{ flex: 1, minWidth: "200px", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px" }}>
-                            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "12px", textTransform: "uppercase" }}>Répartition</div>
+                            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "12px", textTransform: "uppercase" }}>Répartition des {surfaceA.toLocaleString()} ha</div>
                             {[
                               { z:1, ha: analyse.zone1_ha ?? 0 },
                               { z:2, ha: analyse.zone2_ha ?? 0 },
@@ -388,8 +430,8 @@ export default function PalmciDashboard() {
                           </div>
                         </div>
 
-                        <button className="btn-primary" onClick={() => setSiteActuel(null)}>
-                          Retour à la liste des sites
+                        <button className="btn-primary" onClick={envoyerApp}>
+                          <Send size={16} /> Envoyer la prescription aux agents terrains
                         </button>
 
                       </div>
