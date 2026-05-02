@@ -10,6 +10,7 @@ import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import MobileApp from './MobileApp';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -76,6 +77,7 @@ export default function PalmciDashboard() {
   const [data, setData] = useState({});
   const [erreur, setErreur] = useState(null);
   const [imgActive, setImgActive] = useState("ndvi");
+  const [showMobileApp, setShowMobileApp] = useState(false);
   const cache = useRef({});
 
   const chargerDonnees = async (siteId, nom, annee) => {
@@ -125,7 +127,9 @@ export default function PalmciDashboard() {
     a.click();
   };
 
-  const envoyerApp = () => alert(`Les coordonnées géospatiales des zones de "Stress Sévère" et "Stress Modéré" du site PALMCI ${nomSite} ont été envoyées avec succès sur les applications mobiles des agriculteurs !`);
+  const envoyerApp = () => {
+    setShowMobileApp(true);
+  };
 
   const analyse = data.analyse;
   const images = data.images;
@@ -156,6 +160,10 @@ export default function PalmciDashboard() {
   const zoneInfo = ZONES[zone] || ZONES[2];
   const imgUrl = images?.images?.[imgActive];
 
+  if (showMobileApp) {
+    return <MobileApp nomSite={nomSite} onBack={() => setShowMobileApp(false)} />;
+  }
+
   return (
     <div className="layout">
       {/* Sidebar */}
@@ -167,10 +175,6 @@ export default function PalmciDashboard() {
         
         <nav className="sidebar-nav">
           <div className="nav-item active"><LayoutDashboard size={18}/> Tableau de bord</div>
-          <div className="nav-item"><MapIcon size={18}/> Cartographie GEE</div>
-          <div className="nav-item"><Users size={18}/> Agriculteurs</div>
-          <div className="nav-item"><History size={18}/> Historique</div>
-          <div className="nav-item"><Settings size={18}/> Paramètres</div>
         </nav>
 
         <div className="sidebar-footer">
