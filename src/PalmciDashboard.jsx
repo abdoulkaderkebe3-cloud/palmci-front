@@ -32,7 +32,7 @@ function MapFlyTo({ siteActuel }) {
       const site = SITES_MAP.find(s => s.id === siteActuel);
       if (site) map.flyTo([site.lat, site.lon], 12, { duration: 1.5 });
     } else {
-      map.flyTo([5.345, -5.0], 7, { duration: 1.5 });
+      map.flyTo([7.54, -5.55], 6, { duration: 1.5 }); // Centre de la Côte d'Ivoire
     }
   }, [siteActuel, map]);
   return null;
@@ -82,9 +82,9 @@ function CarteCoteIvoire({ siteActuel, onSelectSite }) {
     <div style={{ position:"relative", background:"#060e06", borderRadius:16, border:"1px solid #1b5e20", overflow:"hidden" }}>
       <div style={{ position:"relative", paddingBottom:"75%" }}>
         <div style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%" }}>
-          <MapContainer center={[5.345, -5.0]} zoom={7} style={{ height: "100%", width: "100%" }} zoomControl={false}>
+          <MapContainer center={[7.54, -5.55]} zoom={6} style={{ height: "100%", width: "100%" }} zoomControl={false}>
             <TileLayer
-              url="http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+              url="http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
               attribution="&copy; Google Earth"
             />
             {SITES_MAP.map(site => (
