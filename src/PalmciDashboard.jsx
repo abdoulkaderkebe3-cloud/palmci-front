@@ -133,10 +133,10 @@ export default function PalmciDashboard() {
 
   let surfaceA = 44000, zonesC = "8 sites", parcellesS = "17%";
   let infosGee = {
-    images: 12,
+    images: "—",
     resolution: "10m × 10m",
     source: "Sentinel-2 SR",
-    periode: "Nov → Fév"
+    periode: "—"
   };
 
   if (analyse) {
@@ -311,9 +311,9 @@ export default function PalmciDashboard() {
                         <NdviBar value={analyse.ndvi_moyen} />
                       </div>
 
-                      {/* 3. SURFACES PAR ZONE */}
+                      {/* 3. SURFACES ET PRESCRIPTIONS PAR ZONE */}
                       <div style={{ border: "1px solid #e2e8f0", background: "#f8fafc", padding: "16px", borderRadius: "8px" }}>
-                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#0e5033", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "1px" }}>SURFACES PAR ZONE</div>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#0e5033", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "1px" }}>SURFACES ET DOSES PAR ZONE</div>
                         {[
                           { z:1, ha: analyse.zone1_ha ?? 0 },
                           { z:2, ha: analyse.zone2_ha ?? 0 },
@@ -322,10 +322,13 @@ export default function PalmciDashboard() {
                           const total = ((analyse.zone1_ha??0)+(analyse.zone2_ha??0)+(analyse.zone3_ha??0)) || 1;
                           const pct = ((ha/total)*100).toFixed(1);
                           return (
-                            <div key={z} style={{ marginBottom: "12px" }}>
+                            <div key={z} style={{ marginBottom: "14px" }}>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
                                 <span style={{ fontSize: "12px", fontWeight: "600", color: ZONES[z].color }}>Zone {z} — {ZONES[z].label}</span>
                                 <span style={{ fontSize: "12px", fontWeight: "800", color: ZONES[z].color }}>{Number(ha).toFixed(0)} ha ({pct}%)</span>
+                              </div>
+                              <div style={{ fontSize: "11px", color: "#475569", marginBottom: "6px", fontWeight: "500" }}>
+                                Quantité prescrite : <strong style={{ color: ZONES[z].color }}>{ZONES[z].dose}</strong>
                               </div>
                               <div style={{ background: "#e2e8f0", borderRadius: "6px", height: "8px" }}>
                                 <div style={{ width: `${pct}%`, height: "100%", background: ZONES[z].color, borderRadius: "6px" }}/>
