@@ -1,5 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
+import { 
+  LayoutDashboard, BarChart2, Users, History, Settings,
+  AlertTriangle, TrendingDown, CheckCircle, Globe,
+  Send, Download
+} from "lucide-react";
+
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -25,6 +31,20 @@ const SITES_MAP = [
   { id: 8, nom: "NEKA",       lat: 4.565, lon: -7.512 },
 ];
 
+const ZONES = {
+  1: { label: "Stress sévère",    dose: "DOSE MAX",      color: "#e74c3c" },
+  2: { label: "Stress modéré",    dose: "DOSE STANDARD", color: "#f59e0b" },
+  3: { label: "Végétation saine", dose: "DOSE RÉDUITE",  color: "#10b981" },
+};
+
+const IMAGES_TYPES = [
+  { key: "rgb",        label: "RGB",        icon: "🌍", desc: "Vue naturelle" },
+  { key: "ndvi",       label: "NDVI",       icon: "🌿", desc: "Zones prescription" },
+  { key: "infrarouge", label: "INFRAROUGE", icon: "🔴", desc: "Fausses couleurs" },
+];
+
+const ANNEES = ["2023", "2024", "2025"];
+
 function MapFlyTo({ siteActuel }) {
   const map = useMap();
   useEffect(() => {
@@ -38,236 +58,24 @@ function MapFlyTo({ siteActuel }) {
   return null;
 }
 
-const ZONES = {
-  1: { label: "Stress sévère",    dose: "DOSE MAX",      color: "#e74c3c", glow: "#e74c3c55" },
-  2: { label: "Stress modéré",    dose: "DOSE STANDARD", color: "#f39c12", glow: "#f39c1255" },
-  3: { label: "Végétation saine", dose: "DOSE RÉDUITE",  color: "#27ae60", glow: "#27ae6055" },
-};
-
-const IMAGES_TYPES = [
-  { key: "rgb",        label: "RGB",        icon: "🌍", desc: "Vue naturelle" },
-  { key: "ndvi",       label: "NDVI",       icon: "🌿", desc: "Zones prescription" },
-  { key: "infrarouge", label: "INFRAROUGE", icon: "🔴", desc: "Fausses couleurs" },
-];
-
-const ANNEES = ["2023", "2024", "2025"];
-
-function Spinner() {
-  return (
-    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:48, gap:16 }}>
-      <div style={{
-        width:44, height:44, border:"3px solid #1b5e20",
-        borderTop:"3px solid #4caf50", borderRadius:"50%",
-        animation:"spin 0.9s linear infinite"
-      }}/>
-      <div style={{ color:"#4caf50", fontSize:12, letterSpacing:3 }}>ANALYSE SATELLITAIRE...</div>
-      <div style={{ color:"#2e7d32", fontSize:11 }}>Sentinel-2 · Google Earth Engine</div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  );
-}
-
 function NdviBar({ value }) {
   const pct = Math.max(0, Math.min(100, (value||0)*100));
-  const c = !value ? "#333" : value < 0.35 ? "#e74c3c" : value < 0.55 ? "#f39c12" : "#27ae60";
+  const c = !value ? "#e2e8f0" : value < 0.35 ? "#e74c3c" : value < 0.55 ? "#f59e0b" : "#10b981";
   return (
-    <div style={{ background:"#0a1a0a", borderRadius:4, height:8, overflow:"hidden", margin:"6px 0" }}>
-      <div style={{ width:`${pct}%`, height:"100%", background:c, borderRadius:4, transition:"width 1.4s cubic-bezier(.22,1,.36,1)", boxShadow:`0 0 8px ${c}88` }}/>
-    </div>
-  );
-}
-
-function CarteCoteIvoire({ siteActuel, onSelectSite }) {
-  return (
-    <div style={{ position:"relative", background:"#060e06", borderRadius:16, border:"1px solid #1b5e20", overflow:"hidden" }}>
-      <div style={{ position:"relative", paddingBottom:"75%" }}>
-        <div style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%" }}>
-          <MapContainer center={[7.54, -5.55]} zoom={6} style={{ height: "100%", width: "100%" }} zoomControl={false}>
-            <TileLayer
-              url="http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
-              attribution="&copy; Google Earth"
-            />
-            {SITES_MAP.map(site => (
-              <CircleMarker 
-                key={site.id} 
-                center={[site.lat, site.lon]} 
-                radius={siteActuel === site.id ? 10 : 6}
-                color={siteActuel === site.id ? "#4caf50" : "#1b5e20"}
-                fillColor={siteActuel === site.id ? "#4caf50" : "#0e5033"}
-                fillOpacity={0.8}
-                weight={2}
-                eventHandlers={{ click: () => onSelectSite(site.id, site.nom) }}
-              >
-                <Popup>
-                  <div style={{ color: "#333", fontWeight: "bold", fontSize: "12px", fontFamily:"'Courier New',monospace" }}>PALMCI {site.nom}</div>
-                </Popup>
-              </CircleMarker>
-            ))}
-            <MapFlyTo siteActuel={siteActuel} />
-          </MapContainer>
-        </div>
-        
-        <div style={{ position:"absolute", inset:0, background:"rgba(6,14,6,0.15)", pointerEvents:"none", zIndex: 400 }}/>
-
-        <div style={{ position:"absolute", top:12, left:12, background:"rgba(0,0,0,.88)", border:"1px solid #2e7d32", borderRadius:8, padding:"8px 14px", zIndex:1000 }}>
-          <div style={{ fontSize:9, letterSpacing:4, color:"#4caf50" }}>GROUPE SIFCA</div>
-          <div style={{ fontSize:14, fontWeight:900, color:"#fff" }}>PALMCI — 8 Sites UAI</div>
-          <div style={{ fontSize:10, color:"#4caf50", marginTop:2 }}>↓ Cliquez un site pour analyser</div>
-        </div>
-      </div>
-      <div style={{ padding:"10px 16px", borderTop:"1px solid #1b5e20", display:"flex", gap:14, flexWrap:"wrap" }}>
-        {Object.entries(ZONES).map(([z,info]) => (
-          <div key={z} style={{ display:"flex", alignItems:"center", gap:6 }}>
-            <div style={{ width:10, height:10, borderRadius:2, background:info.color }}/>
-            <span style={{ fontSize:10, color:"#aaa" }}>Zone {z} — {info.dose}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Rapport({ analyse, images, prescription, loading }) {
-  const [imgActive, setImgActive] = useState("ndvi");
-
-  if (loading) return <Spinner/>;
-  if (!analyse) return null;
-
-  const zone = analyse.zone ?? 2;
-  const zoneInfo = ZONES[zone] || ZONES[2];
-  const imgUrl = images?.images?.[imgActive];
-
-  return (
-    <div style={{ animation:"fadeIn .5s ease" }}>
-      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`}</style>
-      <div style={{ display:"flex", gap:16 }}>
-        
-        {/* Stats */}
-        <div style={{ flex:1, display:"flex", flexDirection:"column", gap:10 }}>
-          
-          <div style={{ background:zoneInfo.color+"18", border:`1px solid ${zoneInfo.color}50`, borderLeft:`4px solid ${zoneInfo.color}`, borderRadius:10, padding:"12px 14px" }}>
-            <div style={{ fontSize:9, letterSpacing:4, color:zoneInfo.color, marginBottom:3 }}>ZONE DOMINANTE</div>
-            <div style={{ fontSize:17, fontWeight:900, color:"#fff" }}>Zone {zone} — {zoneInfo.label}</div>
-            <div style={{ fontSize:13, color:zoneInfo.color, fontWeight:700, marginTop:3 }}>
-              → {analyse.action || "Action recommandée"}
-            </div>
-          </div>
-
-          <div style={{ background:"#0a150a", border:"1px solid #1b5e20", borderRadius:10, padding:"12px 14px" }}>
-            <div style={{ fontSize:9, letterSpacing:4, color:"#4caf50", marginBottom:8 }}>INDICE NDVI</div>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
-              <span style={{ fontSize:34, fontWeight:900, color:zoneInfo.color, lineHeight:1 }}>
-                {(analyse.ndvi_moyen ?? 0).toFixed(4)}
-              </span>
-              <div style={{ fontSize:10, color:"#555", textAlign:"right", lineHeight:2 }}>
-                <div>min <span style={{ color:"#e74c3c" }}>{(analyse.ndvi_min??0).toFixed(4)}</span></div>
-                <div>max <span style={{ color:"#27ae60" }}>{(analyse.ndvi_max??0).toFixed(4)}</span></div>
-              </div>
-            </div>
-            <NdviBar value={analyse.ndvi_moyen}/>
-          </div>
-
-          <div style={{ background:"#0a150a", border:"1px solid #1b5e20", borderRadius:10, padding:"12px 14px" }}>
-            <div style={{ fontSize:9, letterSpacing:4, color:"#4caf50", marginBottom:10 }}>SURFACES PAR ZONE</div>
-            {[
-              { z:1, ha: analyse.zone1_ha ?? 0 },
-              { z:2, ha: analyse.zone2_ha ?? 0 },
-              { z:3, ha: analyse.zone3_ha ?? 0 },
-            ].map(({ z, ha }) => {
-              const total = ((analyse.zone1_ha??0)+(analyse.zone2_ha??0)+(analyse.zone3_ha??0)) || 1;
-              const pct = ((ha/total)*100).toFixed(1);
-              return (
-                <div key={z} style={{ marginBottom:9 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
-                    <span style={{ fontSize:11, color:ZONES[z].color }}>Zone {z} — {ZONES[z].label}</span>
-                    <span style={{ fontSize:11, fontWeight:700, color:ZONES[z].color }}>{Number(ha).toFixed(0)} ha ({pct}%)</span>
-                  </div>
-                  <div style={{ background:"#0d1f0d", borderRadius:4, height:6 }}>
-                    <div style={{ width:`${pct}%`, height:"100%", background:ZONES[z].color, borderRadius:4, transition:"width 1.2s ease", boxShadow:`0 0 6px ${ZONES[z].glow}` }}/>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {prescription && (
-            <div style={{ background:"#0a150a", border:"1px solid #1b5e20", borderRadius:10, padding:"12px 14px" }}>
-              <div style={{ fontSize:9, letterSpacing:4, color:"#4caf50", marginBottom:8 }}>PRESCRIPTION ENGRAIS</div>
-              {[
-                { label:"Type engrais", value: prescription.prescription?.type_engrais },
-                { label:"Dose",         value: prescription.prescription?.dose || analyse.dose },
-                { label:"Age palmier",  value: prescription.prescription?.age_palmier ? `${prescription.prescription.age_palmier} ans` : "—" },
-              ].map(({ label, value }) => (
-                <div key={label} style={{ display:"flex", justifyContent:"space-between", marginBottom:5, fontSize:11 }}>
-                  <span style={{ color:"#555" }}>{label}</span>
-                  <span style={{ color:"#a5d6a7", fontWeight:700 }}>{value||"—"}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div style={{ background:"#0a150a", border:"1px solid #1b5e20", borderRadius:10, padding:"12px 14px" }}>
-            <div style={{ fontSize:9, letterSpacing:4, color:"#4caf50", marginBottom:8 }}>INFORMATIONS</div>
-            {[
-              { label:"Images analysées", value:`${analyse.nb_images??"—"} images` },
-              { label:"Résolution",       value:"10m × 10m" },
-              { label:"Source",           value:"Sentinel-2 SR" },
-              { label:"Période",          value:analyse.periode??"Nov → Fév" },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ display:"flex", justifyContent:"space-between", marginBottom:5, fontSize:11 }}>
-                <span style={{ color:"#555" }}>{label}</span>
-                <span style={{ color:"#a5d6a7", fontWeight:700 }}>{value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Images */}
-        <div style={{ flex:1, display:"flex", flexDirection:"column", gap:10 }}>
-          <div style={{ fontSize:9, letterSpacing:4, color:"#4caf50" }}>IMAGES SATELLITES</div>
-          <div style={{ display:"flex", gap:8 }}>
-            {IMAGES_TYPES.map(img => (
-              <button key={img.key} onClick={() => setImgActive(img.key)} style={{
-                flex:1, background:imgActive===img.key?"#1b5e20":"#0a150a",
-                border:`2px solid ${imgActive===img.key?"#4caf50":"#1b5e20"}`,
-                borderRadius:10, padding:"10px 4px", cursor:"pointer",
-                color:imgActive===img.key?"#a5d6a7":"#2e7d32", fontFamily:"monospace",
-                transition:"all .2s", boxShadow:imgActive===img.key?"0 0 12px #4caf5033":"none"
-              }}>
-                <div style={{ fontSize:20, marginBottom:4 }}>{img.icon}</div>
-                <div style={{ fontSize:11, fontWeight:800, letterSpacing:1 }}>{img.label}</div>
-                <div style={{ fontSize:9, color:imgActive===img.key?"#66bb6a":"#1b5e20", marginTop:2 }}>{img.desc}</div>
-              </button>
-            ))}
-          </div>
-          
-          <div style={{ background:"#0a150a", border:"1px solid #1b5e20", borderRadius:12, overflow:"hidden", aspectRatio:"1", display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {imgUrl ? (
-              <img src={imgUrl} alt={imgActive} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
-            ) : (
-              <div style={{ color:"#1b5e20", fontSize:12, textAlign:"center" }}>
-                <div style={{ fontSize:32, marginBottom:8 }}>🛰️</div>
-                Image non disponible
-              </div>
-            )}
-          </div>
-          <div style={{ fontSize:10, color:"#2e7d32", textAlign:"center" }}>
-            {IMAGES_TYPES.find(i=>i.key===imgActive)?.desc} · Sentinel-2 · 10m/pixel
-          </div>
-        </div>
-
-      </div>
+    <div style={{ background:"#f1f5f9", borderRadius:4, height:8, overflow:"hidden", margin:"8px 0" }}>
+      <div style={{ width:`${pct}%`, height:"100%", background:c, borderRadius:4, transition:"width 1.4s ease" }}/>
     </div>
   );
 }
 
 export default function PalmciDashboard() {
-  const [siteActuel,  setSiteActuel]  = useState(null);
-  const [nomSite,     setNomSite]     = useState(null);
+  const [siteActuel, setSiteActuel] = useState(null);
+  const [nomSite, setNomSite] = useState("");
   const [anneeActive, setAnneeActive] = useState("2025");
-  const [loading,     setLoading]     = useState(false);
-  const [data,        setData]        = useState({});
-  const [erreur,      setErreur]      = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState({});
+  const [erreur, setErreur] = useState(null);
+  const [imgActive, setImgActive] = useState("ndvi");
   const cache = useRef({});
 
   const chargerDonnees = async (siteId, nom, annee) => {
@@ -275,7 +83,6 @@ export default function PalmciDashboard() {
     setNomSite(nom); 
     setErreur(null);
     
-    // Clé de cache combinée : siteId + annee
     const cacheKey = `${siteId}-${annee}`;
     if (cache.current[cacheKey]) { 
       setData(cache.current[cacheKey]); 
@@ -298,93 +105,303 @@ export default function PalmciDashboard() {
       cache.current[cacheKey] = result;
       setData(result);
     } catch (err) { 
-      setErreur(err.message || "Impossible de contacter l'API."); 
+      setErreur("Erreur lors de la récupération des données."); 
     } finally { 
       setLoading(false); 
     }
   };
 
-  // Recharger si l'année change
   useEffect(() => {
     if (siteActuel) {
       chargerDonnees(siteActuel, nomSite, anneeActive);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anneeActive]);
 
+  const analyse = data.analyse;
+  const images = data.images;
+  const prescription = data.prescription;
+
+  // KPIs
+  const surfaceAnalyse = analyse ? Math.round((analyse.zone1_ha||0) + (analyse.zone2_ha||0) + (analyse.zone3_ha||0)) : 44000;
+  const zonesCritiques = analyse ? (analyse.zone === 1 ? 1 : 0) : 1;
+
+  const imgUrl = images?.images?.[imgActive];
+
   return (
-    <div style={{ fontFamily:"'Courier New',monospace", background:"#060e06", minHeight:"100vh", color:"#e8f5e9" }}>
-      
-      {/* Header */}
-      <div style={{ background:"linear-gradient(135deg,#1b5e20 0%,#060e06 60%)", borderBottom:"1px solid #1b5e20", padding:"16px 28px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <div>
-          <div style={{ fontSize:9, letterSpacing:6, color:"#4caf50", marginBottom:2 }}>GROUPE SIFCA</div>
-          <h1 style={{ margin:0, fontSize:21, fontWeight:900, color:"#fff", letterSpacing:1 }}>
-            PALMCI — Analyse NDVI Satellitaire
-          </h1>
-          <div style={{ fontSize:11, color:"#4caf50", marginTop:3 }}>8 Sites UAI · Sentinel-2 SR</div>
+    <div className="layout">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            <Globe size={24} color="#a5d6a7" />
+          </div>
+          <div className="logo-text">
+            <h2>PALM-PRÉCISION</h2>
+            <p>Viso Studio | PALM CI</p>
+          </div>
         </div>
-        <div style={{ display:"flex", gap:8 }}>
-          {Object.entries(ZONES).map(([z,info]) => (
-            <div key={z} style={{ display:"flex", alignItems:"center", gap:6, background:info.color+"18", border:`1px solid ${info.color}40`, borderRadius:20, padding:"5px 12px", fontSize:10, color:info.color }}>
-              <div style={{ width:7, height:7, borderRadius:"50%", background:info.color }}/> Zone {z} 
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Body */}
-      <div style={{ display:"flex", gap:20, padding:"20px 28px", alignItems:"flex-start" }}>
         
-        {/* Carte */}
-        <div style={{ width:"42%", flexShrink:0 }}>
-          <div style={{ fontSize:9, letterSpacing:4, color:"#4caf50", marginBottom:10 }}>CÔTE D'IVOIRE — SITES PALMCI</div>
-          <CarteCoteIvoire siteActuel={siteActuel} onSelectSite={(id, nom) => chargerDonnees(id, nom, anneeActive)}/>
-        </div>
+        <nav className="sidebar-nav">
+          <div className="nav-item active"><LayoutDashboard size={18}/> Tableau de bord</div>
+          <div className="nav-item"><BarChart2 size={18}/> Analytiques</div>
+          <div className="nav-item"><Users size={18}/> Agriculteurs</div>
+          <div className="nav-item"><History size={18}/> Historique</div>
+          <div className="nav-item"><Settings size={18}/> Paramètres</div>
+        </nav>
 
-        {/* Analyse */}
-        <div style={{ flex:1, minWidth:0 }}>
-          {!siteActuel ? (
-            <div style={{ textAlign:"center", padding:"60px 0", color:"#1b5e20" }}>
-              <div style={{ fontSize:52, marginBottom:16, filter:"drop-shadow(0 0 20px #4caf5044)" }}>🌴</div>
-              <div style={{ fontSize:16, fontWeight:700, color:"#4caf50", marginBottom:8, letterSpacing:2 }}>SÉLECTIONNEZ UN SITE</div>
-              <div style={{ fontSize:12 }}>Cliquez un marqueur sur la carte pour lancer l'analyse</div>
+        <div className="sidebar-footer">
+          <div className="api-badge">
+            <span>Données GEE</span>
+            <span className="status">EN LIGNE</span>
+          </div>
+          <div className="user-profile">
+            <div className="user-avatar">MP</div>
+            <div className="user-info">
+              <p className="name">Mr Paul</p>
+              <p className="role">Administrateur</p>
             </div>
-          ) : (
-            <>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
-                <div>
-                  <div style={{ fontSize:9, letterSpacing:4, color:"#4caf50" }}>SITE ANALYSÉ</div>
-                  <div style={{ fontSize:20, fontWeight:900, color:"#fff", letterSpacing:1 }}>PALMCI {nomSite}</div>
-                </div>
-                <div style={{ display:"flex", gap:8 }}>
-                  {ANNEES.map(annee => {
-                    const c = annee==="2023"?"#ef9a9a":annee==="2024"?"#fff59d":"#a5d6a7";
-                    const actif = anneeActive===annee;
-                    return (
-                      <button key={annee} onClick={() => setAnneeActive(annee)} style={{
-                        background:actif?"#1b5e20":"#0a150a", border:`2px solid ${actif?c:"#1b5e20"}`,
-                        borderRadius:8, padding:"8px 20px", cursor:"pointer",
-                        color:actif?c:"#2e7d32", fontFamily:"monospace", fontSize:14,
-                        fontWeight:900, letterSpacing:1, transition:"all .2s",
-                        boxShadow:actif?`0 0 16px ${c}44`:"none"
-                      }}>{annee}</button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {erreur && (
-                <div style={{ background:"#2d0a0a", border:"1px solid #c62828", borderRadius:8, padding:14, marginBottom:16, color:"#ef5350", fontSize:12 }}>
-                  {erreur}
-                </div>
-              )}
-
-              <Rapport analyse={data.analyse} images={data.images} prescription={data.prescription} loading={loading}/>
-            </>
-          )}
+          </div>
         </div>
-      </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="main-content">
+        {/* Topbar */}
+        <header className="topbar">
+          <div>
+            <div className="topbar-title"><h1>Supervision des Unités Agricoles</h1></div>
+            <div className="topbar-subtitle">Gestion intelligente des cultures vivrières</div>
+          </div>
+          <div className="topbar-actions">
+            <div className="api-status">
+              <div className="api-dot"></div>
+              GEE API Connectée
+            </div>
+            <button className="export-btn">
+              <Download size={16} /> Exporter
+            </button>
+          </div>
+        </header>
+
+        {/* Dashboard Body */}
+        <div className="dashboard-body">
+          {/* KPIs */}
+          <div className="kpi-grid">
+            <div className="kpi-card">
+              <div className="kpi-header">SURFACE ANALYSÉE <Globe size={16} color="#3b82f6" /></div>
+              <div className="kpi-value">{surfaceAnalyse.toLocaleString()} ha</div>
+              <div className="kpi-sub" style={{ color: "#10b981" }}>+2.5% vs semaine</div>
+              <div style={{ height: "3px", background: "#3b82f6", width: "100%", marginTop: "12px", borderRadius: "2px" }}></div>
+            </div>
+            
+            <div className="kpi-card">
+              <div className="kpi-header">ZONES CRITIQUES <AlertTriangle size={16} color="#ef4444" /></div>
+              <div className="kpi-value">{zonesCritiques}</div>
+              <div className="kpi-sub" style={{ color: "#ef4444" }}>Nécessitent attention</div>
+              <div style={{ height: "3px", background: "#ef4444", width: "30%", marginTop: "12px", borderRadius: "2px" }}></div>
+            </div>
+
+            <div className="kpi-card">
+              <div className="kpi-header">ÉCONOMIES D'ENGRAIS <TrendingDown size={16} color="#10b981" /></div>
+              <div className="kpi-value">15.4%</div>
+              <div className="kpi-sub" style={{ color: "#10b981" }}>Économies réalisées</div>
+              <div style={{ height: "3px", background: "#10b981", width: "80%", marginTop: "12px", borderRadius: "2px" }}></div>
+            </div>
+
+            <div className="kpi-card">
+              <div className="kpi-header">PARCELLES SAINES <CheckCircle size={16} color="#10b981" /></div>
+              <div className="kpi-value">17%</div>
+              <div className="kpi-sub" style={{ color: "#10b981" }}>Bonne santé</div>
+              <div style={{ height: "3px", background: "#10b981", width: "60%", marginTop: "12px", borderRadius: "2px" }}></div>
+            </div>
+          </div>
+
+          <div className="content-split">
+            {/* Left Area (Map Google Earth Hybrid) */}
+            <div className="map-section">
+              <div className="map-header">
+                <div style={{ fontWeight: 600, fontSize: "14px", color: "#0f172a" }}>Carte des Sites PALMCI</div>
+                <div style={{ fontSize: "11px", background: "#f0fdf4", color: "#166534", padding: "4px 8px", borderRadius: "4px" }}>GEE Hybride</div>
+              </div>
+              <div className="map-container">
+                <MapContainer center={[7.54, -5.55]} zoom={6} style={{ height: "100%", width: "100%" }} zoomControl={false}>
+                  {/* Google Hybrid Map Layer */}
+                  <TileLayer
+                    url="http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                    attribution="&copy; Google Earth"
+                  />
+                  {SITES_MAP.map(site => (
+                    <CircleMarker 
+                      key={site.id} 
+                      center={[site.lat, site.lon]} 
+                      radius={siteActuel === site.id ? 10 : 6}
+                      color={siteActuel === site.id ? "#10b981" : "#fff"}
+                      fillColor={siteActuel === site.id ? "#10b981" : "#0e5033"}
+                      fillOpacity={1}
+                      weight={2}
+                      eventHandlers={{ click: () => chargerDonnees(site.id, site.nom, anneeActive) }}
+                    >
+                      <Popup><strong>{site.nom}</strong></Popup>
+                    </CircleMarker>
+                  ))}
+                  <MapFlyTo siteActuel={siteActuel} />
+                </MapContainer>
+              </div>
+            </div>
+
+            {/* Right Area (Scrollable Control Center with all original data & photos) */}
+            <div className="control-section">
+              <div className="control-panel scrollable-panel">
+                
+                {!siteActuel ? (
+                  <>
+                    <div className="panel-title">Centre de Contrôle</div>
+                    <div className="panel-desc">Sélectionnez un site pour charger les données et les photos.</div>
+                    
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px", marginTop: "24px" }}>
+                      {SITES_MAP.map(site => (
+                        <div key={site.id} 
+                             className="site-item"
+                             onClick={() => chargerDonnees(site.id, site.nom, anneeActive)}>
+                          <div>
+                            <div className="site-item-name">PALMCI {site.nom}</div>
+                            <div className="site-item-sub">Cliquez pour analyser</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ animation: "fadeIn 0.4s ease" }}>
+                    {/* Header */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #f1f5f9", paddingBottom: "16px" }}>
+                      <div>
+                        <div style={{ background: analyse?.zone===1?"#fef2f2":analyse?.zone===2?"#fefce8":"#f0fdf4", 
+                                      color: analyse?.zone===1?"#b91c1c":analyse?.zone===2?"#a16207":"#15803d", 
+                                      fontSize: "10px", fontWeight: "700", padding: "4px 8px", borderRadius: "4px", display: "inline-block", marginBottom: "8px", textTransform: "uppercase" }}>
+                          {analyse?.label || "Sélectionné"}
+                        </div>
+                        <h2 style={{ margin: 0, fontSize: "18px", color: "#0f172a" }}>PALMCI {nomSite}</h2>
+                      </div>
+                      
+                      <select 
+                        value={anneeActive} 
+                        onChange={(e) => setAnneeActive(e.target.value)}
+                        style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#f8fafc", fontWeight: "600", outline: "none", cursor: "pointer" }}
+                      >
+                        {ANNEES.map(a => <option key={a} value={a}>{a}</option>)}
+                      </select>
+                    </div>
+
+                    {loading ? (
+                      <div className="spinner-container" style={{ padding: "60px 0" }}>
+                        <div className="spinner"></div>
+                        <div style={{ fontSize: "12px", fontWeight: "600", color: "#0e5033" }}>ANALYSE GEE EN COURS...</div>
+                      </div>
+                    ) : erreur ? (
+                      <div style={{ color: "#ef4444", padding: "16px", background: "#fef2f2", borderRadius: "8px" }}>{erreur}</div>
+                    ) : analyse ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                        
+                        {/* Diagnostic GEE et Indice NDVI */}
+                        <div style={{ display: "flex", gap: "16px" }}>
+                          <div className="diag-box" style={{ flex: 1, margin: 0 }}>
+                            <div className="diag-title">Diagnostic GEE</div>
+                            <div className="diag-value">{(analyse.ndvi_moyen || 0).toFixed(2)}</div>
+                            <div style={{ fontSize: "11px", color: "#0369a1", marginTop: "4px" }}>NDVI Moyen</div>
+                          </div>
+                          
+                          <div style={{ flex: 1, border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#64748b" }}>
+                              <span>min: <strong style={{color:"#e74c3c"}}>{(analyse.ndvi_min??0).toFixed(2)}</strong></span>
+                              <span>max: <strong style={{color:"#10b981"}}>{(analyse.ndvi_max??0).toFixed(2)}</strong></span>
+                            </div>
+                            <NdviBar value={analyse.ndvi_moyen} />
+                            <div style={{ fontSize: "10px", textAlign: "center", color: "#64748b" }}>Spectre Végétatif</div>
+                          </div>
+                        </div>
+
+                        {/* Photos Satellites depuis le Back */}
+                        <div style={{ border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", background: "#f8fafc" }}>
+                          <div style={{ fontSize: "12px", fontWeight: "700", color: "#0f172a", marginBottom: "12px", textTransform: "uppercase" }}>
+                            Imagerie Spatiale
+                          </div>
+                          
+                          <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                            {IMAGES_TYPES.map(img => (
+                              <button key={img.key} onClick={() => setImgActive(img.key)} style={{
+                                flex: 1, 
+                                background: imgActive === img.key ? "#0e5033" : "white",
+                                border: `1px solid ${imgActive === img.key ? "#0e5033" : "#cbd5e1"}`,
+                                color: imgActive === img.key ? "white" : "#475569",
+                                borderRadius: "6px", padding: "8px", cursor: "pointer", transition: "all 0.2s"
+                              }}>
+                                <div style={{ fontSize: "16px", marginBottom: "2px" }}>{img.icon}</div>
+                                <div style={{ fontSize: "10px", fontWeight: "700" }}>{img.label}</div>
+                              </button>
+                            ))}
+                          </div>
+
+                          <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden", height: "240px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {imgUrl ? (
+                              <img src={imgUrl} alt={imgActive} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}/>
+                            ) : (
+                              <div style={{ color: "#64748b", fontSize: "12px", textAlign: "center" }}>
+                                <div style={{ fontSize: "24px", marginBottom: "8px" }}>🛰️</div>
+                                Photo en cours de traitement...
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Prescription IA & Surfaces */}
+                        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                          {prescription && (
+                            <div className="presc-box" style={{ flex: 1, minWidth: "200px", margin: 0 }}>
+                              <div className="presc-title">Prescription IA</div>
+                              <div className="presc-value" style={{ fontSize: "18px" }}>{prescription.prescription?.dose || analyse.dose}</div>
+                              <div style={{ fontSize: "11px", color: "#a16207", marginTop: "4px" }}>{prescription.prescription?.type_engrais}</div>
+                            </div>
+                          )}
+
+                          <div style={{ flex: 1, minWidth: "200px", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px" }}>
+                            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "12px", textTransform: "uppercase" }}>Répartition</div>
+                            {[
+                              { z:1, ha: analyse.zone1_ha ?? 0 },
+                              { z:2, ha: analyse.zone2_ha ?? 0 },
+                              { z:3, ha: analyse.zone3_ha ?? 0 },
+                            ].map(({ z, ha }) => {
+                              const total = ((analyse.zone1_ha??0)+(analyse.zone2_ha??0)+(analyse.zone3_ha??0)) || 1;
+                              const pct = ((ha/total)*100).toFixed(1);
+                              return (
+                                <div key={z} style={{ marginBottom: "8px" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                                    <span style={{ fontSize: "10px", color: "#334155" }}>{ZONES[z].label}</span>
+                                    <span style={{ fontSize: "10px", fontWeight: "700", color: ZONES[z].color }}>{pct}%</span>
+                                  </div>
+                                  <div style={{ background: "#f1f5f9", borderRadius: "4px", height: "4px" }}>
+                                    <div style={{ width: `${pct}%`, height: "100%", background: ZONES[z].color, borderRadius: "4px" }}/>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <button className="btn-primary" onClick={() => setSiteActuel(null)}>
+                          Retour à la liste des sites
+                        </button>
+
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
     </div>
   );
 }
