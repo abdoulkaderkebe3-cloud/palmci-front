@@ -52,7 +52,7 @@ function MapFlyTo({ siteActuel }) {
       const site = SITES_MAP.find(s => s.id === siteActuel);
       if (site) map.flyTo([site.lat, site.lon], 12, { duration: 1.5 });
     } else {
-      map.flyTo([7.54, -5.55], 6, { duration: 1.5 }); // Centre de la Côte d'Ivoire
+      map.flyTo([7.54, -5.55], 6, { duration: 1.5 });
     }
   }, [siteActuel, map]);
   return null;
@@ -62,8 +62,8 @@ function NdviBar({ value }) {
   const pct = Math.max(0, Math.min(100, (value||0)*100));
   const c = !value ? "#e2e8f0" : value < 0.35 ? "#e74c3c" : value < 0.55 ? "#f59e0b" : "#10b981";
   return (
-    <div style={{ background:"#f1f5f9", borderRadius:4, height:8, overflow:"hidden", margin:"8px 0" }}>
-      <div style={{ width:`${pct}%`, height:"100%", background:c, borderRadius:4, transition:"width 1.4s ease" }}/>
+    <div style={{ background:"#f1f5f9", borderRadius:6, height:10, overflow:"hidden", margin:"8px 0" }}>
+      <div style={{ width:`${pct}%`, height:"100%", background:c, borderRadius:6, transition:"width 1.4s ease" }}/>
     </div>
   );
 }
@@ -105,62 +105,42 @@ export default function PalmciDashboard() {
       cache.current[cacheKey] = result;
       setData(result);
     } catch (err) { 
-      setErreur("Erreur lors de la récupération des données. Assurez-vous que l'API est en ligne."); 
+      setErreur("Erreur lors de la récupération des données."); 
     } finally { 
       setLoading(false); 
     }
   };
 
   useEffect(() => {
-    if (siteActuel) {
-      chargerDonnees(siteActuel, nomSite, anneeActive);
-    }
+    if (siteActuel) chargerDonnees(siteActuel, nomSite, anneeActive);
   }, [anneeActive]);
 
   const exporterDonnees = () => {
-    if (!data.analyse) {
-      alert("Veuillez d'abord sélectionner et analyser un site avant d'exporter.");
-      return;
-    }
-    const rapport = {
-      site: nomSite,
-      annee: anneeActive,
-      analyse: data.analyse,
-      prescription: data.prescription?.prescription
-    };
+    if (!data.analyse) return alert("Veuillez sélectionner un site.");
+    const rapport = { site: nomSite, annee: anneeActive, analyse: data.analyse, prescription: data.prescription?.prescription };
     const blob = new Blob([JSON.stringify(rapport, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
+    a.href = URL.createObjectURL(blob);
     a.download = `Rapport_PALMCI_${nomSite}_${anneeActive}.json`;
     a.click();
   };
 
-  const envoyerApp = () => {
-    alert(`Les prescriptions pour ${nomSite} ont été envoyées aux agriculteurs sur le terrain via l'application mobile !`);
-  };
+  const envoyerApp = () => alert(`Prescriptions envoyées aux agents terrains !`);
 
   const analyse = data.analyse;
   const images = data.images;
   const prescription = data.prescription;
 
-  // Calcul dynamique des KPIs selon le site sélectionné
-  let surfaceA = 44000;
-  let zonesC = "8 sites";
-  let econ = "15.4%";
-  let parcellesS = "17%";
-
+  let surfaceA = 44000, zonesC = "8 sites", econ = "15.4%", parcellesS = "17%";
   if (analyse) {
     surfaceA = Math.round((analyse.zone1_ha||0) + (analyse.zone2_ha||0) + (analyse.zone3_ha||0));
     zonesC = Math.round(analyse.zone1_ha || 0) + " ha";
-    
-    const pctSaine = surfaceA > 0 ? ((analyse.zone3_ha || 0) / surfaceA * 100) : 0;
-    parcellesS = pctSaine.toFixed(1) + "%";
-
-    const pctEco = surfaceA > 0 ? (((analyse.zone3_ha||0)*0.5 + (analyse.zone2_ha||0)*0.2) / surfaceA * 100) : 0;
-    econ = pctEco.toFixed(1) + "%";
+    parcellesS = (surfaceA > 0 ? ((analyse.zone3_ha || 0) / surfaceA * 100) : 0).toFixed(1) + "%";
+    econ = (surfaceA > 0 ? (((analyse.zone3_ha||0)*0.5 + (analyse.zone2_ha||0)*0.2) / surfaceA * 100) : 0).toFixed(1) + "%";
   }
 
+  const zone = analyse?.zone ?? 2;
+  const zoneInfo = ZONES[zone] || ZONES[2];
   const imgUrl = images?.images?.[imgActive];
 
   return (
@@ -168,13 +148,8 @@ export default function PalmciDashboard() {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <Globe size={24} color="#a5d6a7" />
-          </div>
-          <div className="logo-text">
-            <h2>PALM-PRÉCISION</h2>
-            <p>Viso Studio | PALM CI</p>
-          </div>
+          <div className="sidebar-logo"><Globe size={24} color="#a5d6a7" /></div>
+          <div className="logo-text"><h2>PALM-PRÉCISION</h2><p>Viso Studio | PALM CI</p></div>
         </div>
         
         <nav className="sidebar-nav">
@@ -187,16 +162,10 @@ export default function PalmciDashboard() {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="api-badge">
-            <span>Moteur d'IA</span>
-            <span className="status">ACTIF</span>
-          </div>
+          <div className="api-badge"><span>Moteur d'IA</span><span className="status">ACTIF</span></div>
           <div className="user-profile">
             <div className="user-avatar">MP</div>
-            <div className="user-info">
-              <p className="name">Mr Paul</p>
-              <p className="role">Agronome Principal</p>
-            </div>
+            <div className="user-info"><p className="name">Mr Paul</p><p className="role">Agronome Principal</p></div>
           </div>
         </div>
       </aside>
@@ -210,13 +179,8 @@ export default function PalmciDashboard() {
             <div className="topbar-subtitle">Gestion intelligente des cultures vivrières et suivi NDVI</div>
           </div>
           <div className="topbar-actions">
-            <div className="api-status">
-              <div className="api-dot"></div>
-              GEE API Connectée
-            </div>
-            <button className="export-btn" onClick={exporterDonnees}>
-              <Download size={16} /> Exporter Rapport
-            </button>
+            <div className="api-status"><div className="api-dot"/> GEE API Connectée</div>
+            <button className="export-btn" onClick={exporterDonnees}><Download size={16} /> Exporter Rapport</button>
           </div>
         </header>
 
@@ -228,56 +192,47 @@ export default function PalmciDashboard() {
               <div className="kpi-header">SURFACE ANALYSÉE <Globe size={16} color="#3b82f6" /></div>
               <div className="kpi-value">{surfaceA.toLocaleString()} ha</div>
               <div className="kpi-sub" style={{ color: "#3b82f6" }}>{siteActuel ? `Pour ${nomSite}` : "Total estimé"}</div>
-              <div style={{ height: "3px", background: "#3b82f6", width: "100%", marginTop: "12px", borderRadius: "2px" }}></div>
+              <div style={{ height: "3px", background: "#3b82f6", width: "100%", marginTop: "12px", borderRadius: "2px" }}/>
             </div>
             
             <div className="kpi-card">
               <div className="kpi-header">STRESS SÉVÈRE (ZONE 1) <AlertTriangle size={16} color="#ef4444" /></div>
               <div className="kpi-value">{zonesC}</div>
               <div className="kpi-sub" style={{ color: "#ef4444" }}>Nécessitent une intervention</div>
-              <div style={{ height: "3px", background: "#ef4444", width: "30%", marginTop: "12px", borderRadius: "2px" }}></div>
+              <div style={{ height: "3px", background: "#ef4444", width: "30%", marginTop: "12px", borderRadius: "2px" }}/>
             </div>
 
             <div className="kpi-card">
               <div className="kpi-header">ÉCONOMIES D'ENGRAIS <TrendingDown size={16} color="#10b981" /></div>
               <div className="kpi-value">{econ}</div>
               <div className="kpi-sub" style={{ color: "#10b981" }}>Économie potentielle IA</div>
-              <div style={{ height: "3px", background: "#10b981", width: "80%", marginTop: "12px", borderRadius: "2px" }}></div>
+              <div style={{ height: "3px", background: "#10b981", width: "80%", marginTop: "12px", borderRadius: "2px" }}/>
             </div>
 
             <div className="kpi-card">
               <div className="kpi-header">PARCELLES SAINES <CheckCircle size={16} color="#10b981" /></div>
               <div className="kpi-value">{parcellesS}</div>
               <div className="kpi-sub" style={{ color: "#10b981" }}>Végétation optimale (Zone 3)</div>
-              <div style={{ height: "3px", background: "#10b981", width: "60%", marginTop: "12px", borderRadius: "2px" }}></div>
+              <div style={{ height: "3px", background: "#10b981", width: "60%", marginTop: "12px", borderRadius: "2px" }}/>
             </div>
           </div>
 
-          <div className="content-split">
-            {/* Left Area (Map Google Earth Hybrid) */}
-            <div className="map-section">
+          <div className="content-split" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            
+            {/* Map (Prend toute la largeur si pas de site, sinon reste grande) */}
+            <div className="map-section" style={{ height: siteActuel ? "350px" : "500px", flex: "none" }}>
               <div className="map-header">
-                <div style={{ fontWeight: 600, fontSize: "14px", color: "#0f172a" }}>Carte des Sites PALMCI</div>
-                <div style={{ fontSize: "11px", background: "#f0fdf4", color: "#166534", padding: "4px 8px", borderRadius: "4px" }}>GEE Hybride</div>
+                <div style={{ fontWeight: 600, fontSize: "14px", color: "#0f172a" }}>Cartographie Google Earth Hybride</div>
+                {!siteActuel && <div style={{ fontSize: "12px", color: "#64748b" }}>Sélectionnez un marqueur pour afficher l'analyse détaillée ci-dessous.</div>}
               </div>
-              <div className="map-container">
+              <div className="map-container" style={{ height: "100%" }}>
                 <MapContainer center={[7.54, -5.55]} zoom={6} style={{ height: "100%", width: "100%" }} zoomControl={false}>
-                  {/* Google Hybrid Map Layer */}
-                  <TileLayer
-                    url="http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
-                    attribution="&copy; Google Earth"
-                  />
+                  <TileLayer url="http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" attribution="&copy; Google Earth"/>
                   {SITES_MAP.map(site => (
                     <CircleMarker 
-                      key={site.id} 
-                      center={[site.lat, site.lon]} 
-                      radius={siteActuel === site.id ? 10 : 6}
-                      color={siteActuel === site.id ? "#10b981" : "#fff"}
-                      fillColor={siteActuel === site.id ? "#10b981" : "#0e5033"}
-                      fillOpacity={1}
-                      weight={2}
-                      eventHandlers={{ click: () => chargerDonnees(site.id, site.nom, anneeActive) }}
-                    >
+                      key={site.id} center={[site.lat, site.lon]} radius={siteActuel === site.id ? 10 : 6}
+                      color={siteActuel === site.id ? "#10b981" : "#fff"} fillColor={siteActuel === site.id ? "#10b981" : "#0e5033"} fillOpacity={1} weight={2}
+                      eventHandlers={{ click: () => chargerDonnees(site.id, site.nom, anneeActive) }}>
                       <Popup><strong>{site.nom}</strong></Popup>
                     </CircleMarker>
                   ))}
@@ -286,162 +241,168 @@ export default function PalmciDashboard() {
               </div>
             </div>
 
-            {/* Right Area (Scrollable Control Center) */}
-            <div className="control-section">
-              <div className="control-panel scrollable-panel">
+            {/* RAPPORT DETAILLE (Apparaît en bas quand un site est sélectionné, exactement comme le 1er dashboard) */}
+            {siteActuel && (
+              <div style={{ background: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e2e8f0", animation: "fadeIn 0.5s ease" }}>
                 
-                {!siteActuel ? (
-                  <>
-                    <div className="panel-title">Centre de Contrôle</div>
-                    <div className="panel-desc">Sélectionnez un site sur la carte ou dans la liste pour charger l'analyse GEE.</div>
+                {/* Header Rapport */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "16px", marginBottom: "20px" }}>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: "20px", color: "#0f172a" }}>Analyse Détaillée : PALMCI {nomSite}</h2>
+                    <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#64748b" }}>Supervision satellite et recommandations agronomiques</p>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    {ANNEES.map(annee => (
+                      <button key={annee} onClick={() => setAnneeActive(annee)} style={{
+                        background: anneeActive === annee ? "#0e5033" : "#f8fafc",
+                        border: `1px solid ${anneeActive === annee ? "#0e5033" : "#cbd5e1"}`,
+                        color: anneeActive === annee ? "white" : "#475569",
+                        padding: "8px 20px", borderRadius: "6px", fontWeight: "700", cursor: "pointer", transition: "all 0.2s"
+                      }}>{annee}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {loading ? (
+                  <div className="spinner-container" style={{ padding: "80px 0" }}><div className="spinner"/><div style={{ fontSize: "13px", fontWeight: "600", color: "#0e5033" }}>ANALYSE GEE EN COURS...</div></div>
+                ) : erreur ? (
+                  <div style={{ color: "#ef4444", padding: "16px", background: "#fef2f2", borderRadius: "8px" }}>{erreur}</div>
+                ) : analyse ? (
+                  <div style={{ display: "flex", gap: "32px", flexWrap: "wrap" }}>
                     
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px", marginTop: "24px" }}>
-                      {SITES_MAP.map(site => (
-                        <div key={site.id} 
-                             className="site-item"
-                             onClick={() => chargerDonnees(site.id, site.nom, anneeActive)}>
-                          <div>
-                            <div className="site-item-name">PALMCI {site.nom}</div>
-                            <div className="site-item-sub">Cliquez pour analyser le NDVI</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ animation: "fadeIn 0.4s ease" }}>
-                    {/* Header */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #f1f5f9", paddingBottom: "16px" }}>
-                      <div>
-                        <div style={{ background: analyse?.zone===1?"#fef2f2":analyse?.zone===2?"#fefce8":"#f0fdf4", 
-                                      color: analyse?.zone===1?"#b91c1c":analyse?.zone===2?"#a16207":"#15803d", 
-                                      fontSize: "10px", fontWeight: "700", padding: "4px 8px", borderRadius: "4px", display: "inline-block", marginBottom: "8px", textTransform: "uppercase" }}>
-                          {analyse?.label || "Sélectionné"}
-                        </div>
-                        <h2 style={{ margin: 0, fontSize: "18px", color: "#0f172a" }}>PALMCI {nomSite}</h2>
-                      </div>
+                    {/* COLONNE GAUCHE (Les 5 boîtes de stats du 1er dashboard) */}
+                    <div style={{ flex: 1, minWidth: "300px", display: "flex", flexDirection: "column", gap: "16px" }}>
                       
-                      <select 
-                        value={anneeActive} 
-                        onChange={(e) => setAnneeActive(e.target.value)}
-                        style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#f8fafc", fontWeight: "600", outline: "none", cursor: "pointer" }}
-                      >
-                        {ANNEES.map(a => <option key={a} value={a}>{a}</option>)}
-                      </select>
+                      {/* 1. ZONE DOMINANTE */}
+                      <div style={{ background: `${zoneInfo.color}15`, borderLeft: `4px solid ${zoneInfo.color}`, padding: "16px", borderRadius: "8px" }}>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: zoneInfo.color, textTransform: "uppercase", marginBottom: "4px", letterSpacing: "1px" }}>ZONE DOMINANTE</div>
+                        <div style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>Zone {zone} — {zoneInfo.label}</div>
+                        <div style={{ fontSize: "13px", color: zoneInfo.color, fontWeight: "600", marginTop: "4px" }}>→ {analyse.action || "Action recommandée"}</div>
+                      </div>
+
+                      {/* 2. INDICE NDVI */}
+                      <div style={{ border: "1px solid #e2e8f0", background: "#f8fafc", padding: "16px", borderRadius: "8px" }}>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#0e5033", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>INDICE NDVI</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                          <span style={{ fontSize: "36px", fontWeight: "800", color: zoneInfo.color, lineHeight: 1 }}>
+                            {(analyse.ndvi_moyen ?? 0).toFixed(4)}
+                          </span>
+                          <div style={{ fontSize: "11px", color: "#64748b", textAlign: "right" }}>
+                            <div>min <span style={{ color: "#ef4444", fontWeight: "700" }}>{(analyse.ndvi_min??0).toFixed(4)}</span></div>
+                            <div>max <span style={{ color: "#10b981", fontWeight: "700" }}>{(analyse.ndvi_max??0).toFixed(4)}</span></div>
+                          </div>
+                        </div>
+                        <NdviBar value={analyse.ndvi_moyen} />
+                      </div>
+
+                      {/* 3. SURFACES PAR ZONE */}
+                      <div style={{ border: "1px solid #e2e8f0", background: "#f8fafc", padding: "16px", borderRadius: "8px" }}>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#0e5033", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "1px" }}>SURFACES PAR ZONE</div>
+                        {[
+                          { z:1, ha: analyse.zone1_ha ?? 0 },
+                          { z:2, ha: analyse.zone2_ha ?? 0 },
+                          { z:3, ha: analyse.zone3_ha ?? 0 },
+                        ].map(({ z, ha }) => {
+                          const total = ((analyse.zone1_ha??0)+(analyse.zone2_ha??0)+(analyse.zone3_ha??0)) || 1;
+                          const pct = ((ha/total)*100).toFixed(1);
+                          return (
+                            <div key={z} style={{ marginBottom: "12px" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                                <span style={{ fontSize: "12px", fontWeight: "600", color: ZONES[z].color }}>Zone {z} — {ZONES[z].label}</span>
+                                <span style={{ fontSize: "12px", fontWeight: "800", color: ZONES[z].color }}>{Number(ha).toFixed(0)} ha ({pct}%)</span>
+                              </div>
+                              <div style={{ background: "#e2e8f0", borderRadius: "6px", height: "8px" }}>
+                                <div style={{ width: `${pct}%`, height: "100%", background: ZONES[z].color, borderRadius: "6px" }}/>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* 4. PRESCRIPTION ENGRAIS */}
+                      {prescription && (
+                        <div style={{ border: "1px solid #e2e8f0", background: "#f8fafc", padding: "16px", borderRadius: "8px" }}>
+                          <div style={{ fontSize: "11px", fontWeight: "700", color: "#0e5033", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>PRESCRIPTION ENGRAIS</div>
+                          {[
+                            { label: "Type engrais", value: prescription.prescription?.type_engrais },
+                            { label: "Dose recommandée", value: prescription.prescription?.dose || analyse.dose },
+                            { label: "Âge palmier", value: prescription.prescription?.age_palmier ? `${prescription.prescription.age_palmier} ans` : "—" },
+                          ].map(({ label, value }) => (
+                            <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px" }}>
+                              <span style={{ color: "#64748b", fontWeight: "500" }}>{label}</span>
+                              <span style={{ color: "#0f172a", fontWeight: "800" }}>{value||"—"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 5. INFORMATIONS */}
+                      <div style={{ border: "1px solid #e2e8f0", background: "#f8fafc", padding: "16px", borderRadius: "8px" }}>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#0e5033", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>INFORMATIONS</div>
+                        {[
+                          { label: "Images analysées", value: `${analyse.nb_images??"—"} images` },
+                          { label: "Résolution", value: "10m × 10m" },
+                          { label: "Source", value: "Sentinel-2 SR" },
+                          { label: "Période GEE", value: analyse.periode??"N/A" },
+                        ].map(({ label, value }) => (
+                          <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px" }}>
+                            <span style={{ color: "#64748b", fontWeight: "500" }}>{label}</span>
+                            <span style={{ color: "#0f172a", fontWeight: "700" }}>{value}</span>
+                          </div>
+                        ))}
+                      </div>
+
                     </div>
 
-                    {loading ? (
-                      <div className="spinner-container" style={{ padding: "60px 0" }}>
-                        <div className="spinner"></div>
-                        <div style={{ fontSize: "12px", fontWeight: "600", color: "#0e5033" }}>ANALYSE GEE EN COURS...</div>
-                      </div>
-                    ) : erreur ? (
-                      <div style={{ color: "#ef4444", padding: "16px", background: "#fef2f2", borderRadius: "8px" }}>{erreur}</div>
-                    ) : analyse ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                    {/* COLONNE DROITE (Images Satellites du 1er dashboard) */}
+                    <div style={{ flex: 1, minWidth: "300px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                      
+                      {/* 6. IMAGES SATELLITES */}
+                      <div style={{ border: "1px solid #e2e8f0", background: "#f8fafc", padding: "20px", borderRadius: "8px", flex: 1, display: "flex", flexDirection: "column" }}>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#0e5033", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "1px" }}>
+                          IMAGES SATELLITES GEE
+                        </div>
                         
-                        {/* Diagnostic GEE et Indice NDVI */}
-                        <div style={{ display: "flex", gap: "16px" }}>
-                          <div className="diag-box" style={{ flex: 1, margin: 0 }}>
-                            <div className="diag-title">Diagnostic GEE</div>
-                            <div className="diag-value">{(analyse.ndvi_moyen || 0).toFixed(2)}</div>
-                            <div style={{ fontSize: "11px", color: "#0369a1", marginTop: "4px" }}>NDVI Moyen global</div>
-                          </div>
-                          
-                          <div style={{ flex: 1, border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#64748b" }}>
-                              <span>min: <strong style={{color:"#e74c3c"}}>{(analyse.ndvi_min??0).toFixed(2)}</strong></span>
-                              <span>max: <strong style={{color:"#10b981"}}>{(analyse.ndvi_max??0).toFixed(2)}</strong></span>
-                            </div>
-                            <NdviBar value={analyse.ndvi_moyen} />
-                            <div style={{ fontSize: "10px", textAlign: "center", color: "#64748b" }}>Spectre Végétatif</div>
-                          </div>
+                        <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                          {IMAGES_TYPES.map(img => (
+                            <button key={img.key} onClick={() => setImgActive(img.key)} style={{
+                              flex: 1, background: imgActive === img.key ? "#0e5033" : "white",
+                              border: `1px solid ${imgActive === img.key ? "#0e5033" : "#cbd5e1"}`,
+                              color: imgActive === img.key ? "white" : "#475569",
+                              borderRadius: "8px", padding: "12px 8px", cursor: "pointer", transition: "all 0.2s"
+                            }}>
+                              <div style={{ fontSize: "20px", marginBottom: "4px" }}>{img.icon}</div>
+                              <div style={{ fontSize: "11px", fontWeight: "800", letterSpacing: "0.5px" }}>{img.label}</div>
+                              <div style={{ fontSize: "10px", opacity: 0.8, marginTop: "2px" }}>{img.desc}</div>
+                            </button>
+                          ))}
                         </div>
 
-                        {/* Photos Satellites depuis le Back */}
-                        <div style={{ border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", background: "#f8fafc" }}>
-                          <div style={{ fontSize: "12px", fontWeight: "700", color: "#0f172a", marginBottom: "12px", textTransform: "uppercase" }}>
-                            Imagerie Spatiale ({anneeActive})
-                          </div>
-                          
-                          <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-                            {IMAGES_TYPES.map(img => (
-                              <button key={img.key} onClick={() => setImgActive(img.key)} style={{
-                                flex: 1, 
-                                background: imgActive === img.key ? "#0e5033" : "white",
-                                border: `1px solid ${imgActive === img.key ? "#0e5033" : "#cbd5e1"}`,
-                                color: imgActive === img.key ? "white" : "#475569",
-                                borderRadius: "6px", padding: "8px", cursor: "pointer", transition: "all 0.2s"
-                              }}>
-                                <div style={{ fontSize: "16px", marginBottom: "2px" }}>{img.icon}</div>
-                                <div style={{ fontSize: "10px", fontWeight: "700" }}>{img.label}</div>
-                              </button>
-                            ))}
-                          </div>
-
-                          <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden", height: "240px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            {imgUrl ? (
-                              <img src={imgUrl} alt={imgActive} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}/>
-                            ) : (
-                              <div style={{ color: "#64748b", fontSize: "12px", textAlign: "center" }}>
-                                <div style={{ fontSize: "24px", marginBottom: "8px" }}>🛰️</div>
-                                Image en cours de génération GEE...
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "10px", color: "#64748b" }}>
-                            <span>Source: Sentinel-2 SR</span>
-                            <span>Résolution: 10m/px</span>
-                          </div>
-                        </div>
-
-                        {/* Prescription IA & Surfaces */}
-                        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-                          {prescription && (
-                            <div className="presc-box" style={{ flex: 1, minWidth: "200px", margin: 0 }}>
-                              <div className="presc-title">Prescription IA Recommandée</div>
-                              <div className="presc-value" style={{ fontSize: "18px" }}>{prescription.prescription?.dose || analyse.dose}</div>
-                              <div style={{ fontSize: "11px", color: "#a16207", marginTop: "4px" }}>Engrais: {prescription.prescription?.type_engrais || "NPK Standard"}</div>
+                        <div style={{ background: "white", border: "1px solid #cbd5e1", borderRadius: "8px", overflow: "hidden", flex: 1, minHeight: "400px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {imgUrl ? (
+                            <img src={imgUrl} alt={imgActive} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}/>
+                          ) : (
+                            <div style={{ color: "#64748b", fontSize: "14px", textAlign: "center" }}>
+                              <div style={{ fontSize: "36px", marginBottom: "12px" }}>🛰️</div>
+                              Image en cours de génération...
                             </div>
                           )}
-
-                          <div style={{ flex: 1, minWidth: "200px", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px" }}>
-                            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "12px", textTransform: "uppercase" }}>Répartition des {surfaceA.toLocaleString()} ha</div>
-                            {[
-                              { z:1, ha: analyse.zone1_ha ?? 0 },
-                              { z:2, ha: analyse.zone2_ha ?? 0 },
-                              { z:3, ha: analyse.zone3_ha ?? 0 },
-                            ].map(({ z, ha }) => {
-                              const total = ((analyse.zone1_ha??0)+(analyse.zone2_ha??0)+(analyse.zone3_ha??0)) || 1;
-                              const pct = ((ha/total)*100).toFixed(1);
-                              return (
-                                <div key={z} style={{ marginBottom: "8px" }}>
-                                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                                    <span style={{ fontSize: "10px", color: "#334155" }}>{ZONES[z].label}</span>
-                                    <span style={{ fontSize: "10px", fontWeight: "700", color: ZONES[z].color }}>{pct}%</span>
-                                  </div>
-                                  <div style={{ background: "#f1f5f9", borderRadius: "4px", height: "4px" }}>
-                                    <div style={{ width: `${pct}%`, height: "100%", background: ZONES[z].color, borderRadius: "4px" }}/>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
                         </div>
 
-                        <button className="btn-primary" onClick={envoyerApp}>
-                          <Send size={16} /> Envoyer la prescription aux agents terrains
-                        </button>
+                        <div style={{ textAlign: "center", marginTop: "16px" }}>
+                          <button className="btn-primary" onClick={envoyerApp} style={{ padding: "16px", fontSize: "15px", width: "100%" }}>
+                            <Send size={18} /> Transmettre au terrain
+                          </button>
+                        </div>
 
                       </div>
-                    ) : null}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+                    </div>
 
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
