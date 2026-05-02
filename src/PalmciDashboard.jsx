@@ -121,6 +121,7 @@ export default function PalmciDashboard() {
   const images = data.images;
   const prescription = data.prescription;
 
+  // KPIs fixes basés sur les données ou statiques pour l'instant
   const surfaceAnalyse = analyse ? Math.round((analyse.zone1_ha||0) + (analyse.zone2_ha||0) + (analyse.zone3_ha||0)) : 44000;
   const zonesCritiques = analyse ? (analyse.zone === 1 ? 1 : 0) : 1;
 
@@ -130,7 +131,7 @@ export default function PalmciDashboard() {
 
   return (
     <div className="layout">
-      {/* Sidebar */}
+      {/* Sidebar (Même design) */}
       <aside className="sidebar">
         <div className="sidebar-header">
           <div className="sidebar-logo">
@@ -186,50 +187,50 @@ export default function PalmciDashboard() {
 
         {/* Dashboard Body */}
         <div className="dashboard-body">
-          {/* KPIs */}
+          {/* KPIs du nouveau design */}
           <div className="kpi-grid">
             <div className="kpi-card">
               <div className="kpi-header">SURFACE ANALYSÉE <Globe size={16} color="#3b82f6" /></div>
               <div className="kpi-value">{surfaceAnalyse.toLocaleString()} ha</div>
               <div className="kpi-sub" style={{ color: "#10b981" }}>+2.5% vs semaine</div>
-              <div style={{ height: "3px", background: "#3b82f6", width: "100%", marginTop: "12px" }}></div>
+              <div style={{ height: "3px", background: "#3b82f6", width: "100%", marginTop: "12px", borderRadius: "2px" }}></div>
             </div>
             
             <div className="kpi-card">
               <div className="kpi-header">ZONES CRITIQUES <AlertTriangle size={16} color="#ef4444" /></div>
               <div className="kpi-value">{zonesCritiques}</div>
               <div className="kpi-sub" style={{ color: "#ef4444" }}>Nécessitent attention</div>
-              <div style={{ height: "3px", background: "#ef4444", width: "30%", marginTop: "12px" }}></div>
+              <div style={{ height: "3px", background: "#ef4444", width: "30%", marginTop: "12px", borderRadius: "2px" }}></div>
             </div>
 
             <div className="kpi-card">
               <div className="kpi-header">ÉCONOMIES D'ENGRAIS <TrendingDown size={16} color="#10b981" /></div>
               <div className="kpi-value">15.4%</div>
               <div className="kpi-sub" style={{ color: "#10b981" }}>Économies réalisées</div>
-              <div style={{ height: "3px", background: "#10b981", width: "80%", marginTop: "12px" }}></div>
+              <div style={{ height: "3px", background: "#10b981", width: "80%", marginTop: "12px", borderRadius: "2px" }}></div>
             </div>
 
             <div className="kpi-card">
               <div className="kpi-header">PARCELLES SAINES <CheckCircle size={16} color="#10b981" /></div>
               <div className="kpi-value">17%</div>
               <div className="kpi-sub" style={{ color: "#10b981" }}>Bonne santé</div>
-              <div style={{ height: "3px", background: "#10b981", width: "60%", marginTop: "12px" }}></div>
+              <div style={{ height: "3px", background: "#10b981", width: "60%", marginTop: "12px", borderRadius: "2px" }}></div>
             </div>
           </div>
 
-          {/* Map & Site Selection Area */}
-          <div style={{ display: "flex", gap: "24px" }}>
-            {/* Map (Takes 1/3) */}
-            <div className="map-section" style={{ flex: 1, minHeight: "450px" }}>
+          <div className="content-split">
+            {/* Left Area (Map Google Earth) */}
+            <div className="map-section">
               <div className="map-header">
-                <div style={{ fontWeight: 600, fontSize: "14px", color: "#0f172a" }}>Carte des Sites PALMCI</div>
+                <div style={{ fontWeight: 600, fontSize: "14px", color: "#0f172a" }}>Carte des Sites PALMCI (Google Earth)</div>
                 <div style={{ fontSize: "11px", background: "#f0fdf4", color: "#166534", padding: "4px 8px", borderRadius: "4px" }}>GEE Connecté</div>
               </div>
-              <div className="map-container" style={{ height: "350px" }}>
+              <div className="map-container">
                 <MapContainer center={[5.345, -5.0]} zoom={7} style={{ height: "100%", width: "100%" }} zoomControl={false}>
+                  {/* Google Satellite Map Layer */}
                   <TileLayer
-                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    attribution="Tiles &copy; Esri"
+                    url="http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+                    attribution="&copy; Google Earth"
                   />
                   {SITES_MAP.map(site => (
                     <CircleMarker 
@@ -250,181 +251,160 @@ export default function PalmciDashboard() {
               </div>
             </div>
 
-            {/* List of Sites (Takes 2/3 but acts as side nav) */}
-            <div className="sites-list-container" style={{ flex: 1, maxHeight: "450px" }}>
-              <div className="sites-list-header">Sélectionnez un site pour charger les données</div>
-              <div className="sites-list" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", padding: "16px" }}>
-                {SITES_MAP.map(site => (
-                  <div key={site.id} 
-                       className={`site-item ${siteActuel === site.id ? 'active' : ''}`}
-                       style={{ margin: 0 }}
-                       onClick={() => chargerDonnees(site.id, site.nom, anneeActive)}>
-                    <div>
-                      <div className="site-item-name">{site.nom}</div>
-                      <div className="site-item-sub">Cliquez pour analyser</div>
+            {/* Right Area (Scrollable Control Center with all original data & photos) */}
+            <div className="control-section">
+              <div className="control-panel scrollable-panel">
+                
+                {/* Toujours afficher la liste si aucun site sélectionné */}
+                {!siteActuel ? (
+                  <>
+                    <div className="panel-title">Centre de Contrôle</div>
+                    <div className="panel-desc">Sélectionnez un site pour charger les données et les photos.</div>
+                    
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px", marginTop: "24px" }}>
+                      {SITES_MAP.map(site => (
+                        <div key={site.id} 
+                             className="site-item"
+                             onClick={() => chargerDonnees(site.id, site.nom, anneeActive)}>
+                          <div>
+                            <div className="site-item-name">PALMCI {site.nom}</div>
+                            <div className="site-item-sub">Cliquez pour analyser</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
+                  </>
+                ) : (
+                  <>
+                    {/* Header: Titre du site et sélection de l'année */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #f1f5f9", paddingBottom: "16px" }}>
+                      <div>
+                        <div style={{ background: analyse?.zone===1?"#fef2f2":analyse?.zone===2?"#fefce8":"#f0fdf4", 
+                                      color: analyse?.zone===1?"#b91c1c":analyse?.zone===2?"#a16207":"#15803d", 
+                                      fontSize: "10px", fontWeight: "700", padding: "4px 8px", borderRadius: "4px", display: "inline-block", marginBottom: "8px", textTransform: "uppercase" }}>
+                          {analyse?.label || "Sélectionné"}
+                        </div>
+                        <h2 style={{ margin: 0, fontSize: "18px", color: "#0f172a" }}>PALMCI {nomSite}</h2>
+                      </div>
+                      
+                      <select 
+                        value={anneeActive} 
+                        onChange={(e) => setAnneeActive(e.target.value)}
+                        style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#f8fafc", fontWeight: "600", outline: "none", cursor: "pointer" }}
+                      >
+                        {ANNEES.map(a => <option key={a} value={a}>{a}</option>)}
+                      </select>
+                    </div>
+
+                    {loading ? (
+                      <div className="spinner-container" style={{ padding: "60px 0" }}>
+                        <div className="spinner"></div>
+                        <div style={{ fontSize: "12px", fontWeight: "600", color: "#0e5033" }}>ANALYSE GEE EN COURS...</div>
+                      </div>
+                    ) : erreur ? (
+                      <div style={{ color: "#ef4444", padding: "16px", background: "#fef2f2", borderRadius: "8px" }}>{erreur}</div>
+                    ) : analyse ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "20px", animation: "fadeIn 0.4s ease" }}>
+                        
+                        {/* 1. Diagnostic GEE et Indice NDVI */}
+                        <div style={{ display: "flex", gap: "16px" }}>
+                          <div className="diag-box" style={{ flex: 1, margin: 0 }}>
+                            <div className="diag-title">Diagnostic GEE</div>
+                            <div className="diag-value">{(analyse.ndvi_moyen || 0).toFixed(2)}</div>
+                            <div style={{ fontSize: "11px", color: "#0369a1", marginTop: "4px" }}>NDVI Moyen</div>
+                          </div>
+                          
+                          <div style={{ flex: 1, border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#64748b" }}>
+                              <span>min: <strong style={{color:"#e74c3c"}}>{(analyse.ndvi_min??0).toFixed(2)}</strong></span>
+                              <span>max: <strong style={{color:"#10b981"}}>{(analyse.ndvi_max??0).toFixed(2)}</strong></span>
+                            </div>
+                            <NdviBar value={analyse.ndvi_moyen} />
+                            <div style={{ fontSize: "10px", textAlign: "center", color: "#64748b" }}>Spectre Végétatif</div>
+                          </div>
+                        </div>
+
+                        {/* 2. Photos Satellites depuis le Back */}
+                        <div style={{ border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", background: "#f8fafc" }}>
+                          <div style={{ fontSize: "12px", fontWeight: "700", color: "#0f172a", marginBottom: "12px", textTransform: "uppercase" }}>
+                            Imagerie Spatiale
+                          </div>
+                          
+                          {/* Boutons Photos */}
+                          <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                            {IMAGES_TYPES.map(img => (
+                              <button key={img.key} onClick={() => setImgActive(img.key)} style={{
+                                flex: 1, 
+                                background: imgActive === img.key ? "#0e5033" : "white",
+                                border: `1px solid ${imgActive === img.key ? "#0e5033" : "#cbd5e1"}`,
+                                color: imgActive === img.key ? "white" : "#475569",
+                                borderRadius: "6px", padding: "8px", cursor: "pointer", transition: "all 0.2s"
+                              }}>
+                                <div style={{ fontSize: "16px", marginBottom: "2px" }}>{img.icon}</div>
+                                <div style={{ fontSize: "10px", fontWeight: "700" }}>{img.label}</div>
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Affichage de la photo */}
+                          <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden", height: "240px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {imgUrl ? (
+                              <img src={imgUrl} alt={imgActive} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}/>
+                            ) : (
+                              <div style={{ color: "#64748b", fontSize: "12px", textAlign: "center" }}>
+                                <div style={{ fontSize: "24px", marginBottom: "8px" }}>🛰️</div>
+                                Photo en cours de traitement...
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 3. Prescription IA & Surfaces */}
+                        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                          {prescription && (
+                            <div className="presc-box" style={{ flex: 1, minWidth: "200px", margin: 0 }}>
+                              <div className="presc-title">Prescription IA</div>
+                              <div className="presc-value" style={{ fontSize: "18px" }}>{prescription.prescription?.dose || analyse.dose}</div>
+                              <div style={{ fontSize: "11px", color: "#a16207", marginTop: "4px" }}>{prescription.prescription?.type_engrais}</div>
+                            </div>
+                          )}
+
+                          <div style={{ flex: 1, minWidth: "200px", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px" }}>
+                            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "12px", textTransform: "uppercase" }}>Répartition</div>
+                            {[
+                              { z:1, ha: analyse.zone1_ha ?? 0 },
+                              { z:2, ha: analyse.zone2_ha ?? 0 },
+                              { z:3, ha: analyse.zone3_ha ?? 0 },
+                            ].map(({ z, ha }) => {
+                              const total = ((analyse.zone1_ha??0)+(analyse.zone2_ha??0)+(analyse.zone3_ha??0)) || 1;
+                              const pct = ((ha/total)*100).toFixed(1);
+                              return (
+                                <div key={z} style={{ marginBottom: "8px" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                                    <span style={{ fontSize: "10px", color: "#334155" }}>{ZONES[z].label}</span>
+                                    <span style={{ fontSize: "10px", fontWeight: "700", color: ZONES[z].color }}>{pct}%</span>
+                                  </div>
+                                  <div style={{ background: "#f1f5f9", borderRadius: "4px", height: "4px" }}>
+                                    <div style={{ width: `${pct}%`, height: "100%", background: ZONES[z].color, borderRadius: "4px" }}/>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <button className="btn-primary" onClick={() => setSiteActuel(null)}>
+                          Retour à la liste des sites
+                        </button>
+
+                      </div>
+                    ) : null}
+                  </>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Detailed Rapport Area (Appears when site is selected) */}
-          {siteActuel && (
-            <div style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "24px", marginTop: "8px", animation: "fadeIn 0.5s ease" }}>
-              
-              {/* Header of Rapport (Title + Years) */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "16px", marginBottom: "20px" }}>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: "20px", color: "#0f172a" }}>Analyse Détaillée : PALMCI {nomSite}</h2>
-                  <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#64748b" }}>Données générées par Sentinel-2 via Google Earth Engine</p>
-                </div>
-                
-                {/* Sélecteur d'année */}
-                <div style={{ display: "flex", gap: "8px" }}>
-                  {ANNEES.map(annee => (
-                    <button key={annee} onClick={() => setAnneeActive(annee)} style={{
-                      background: anneeActive === annee ? "#0e5033" : "#f8fafc",
-                      border: `1px solid ${anneeActive === annee ? "#0e5033" : "#e2e8f0"}`,
-                      color: anneeActive === annee ? "white" : "#475569",
-                      padding: "8px 16px", borderRadius: "6px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s"
-                    }}>
-                      {annee}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {loading ? (
-                <div className="spinner-container" style={{ padding: "80px 0" }}>
-                  <div className="spinner"></div>
-                  <div style={{ fontSize: "13px", fontWeight: "600", color: "#0e5033" }}>ANALYSE GEE EN COURS...</div>
-                </div>
-              ) : erreur ? (
-                <div style={{ color: "#ef4444", padding: "16px", background: "#fef2f2", borderRadius: "8px" }}>{erreur}</div>
-              ) : analyse ? (
-                <div style={{ display: "flex", gap: "32px" }}>
-                  
-                  {/* Colonne de Gauche : Statistiques */}
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
-                    
-                    {/* Zone Dominante */}
-                    <div style={{ background: `${zoneInfo.color}15`, borderLeft: `4px solid ${zoneInfo.color}`, padding: "16px", borderRadius: "8px" }}>
-                      <div style={{ fontSize: "11px", fontWeight: "700", color: zoneInfo.color, textTransform: "uppercase", marginBottom: "4px" }}>ZONE DOMINANTE</div>
-                      <div style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>Zone {zone} — {zoneInfo.label}</div>
-                      <div style={{ fontSize: "13px", color: zoneInfo.color, fontWeight: "600", marginTop: "4px" }}>→ {analyse.action || "Action recommandée"}</div>
-                    </div>
-
-                    {/* Indice NDVI */}
-                    <div style={{ border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px" }}>
-                      <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "8px", textTransform: "uppercase" }}>Indice NDVI</div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                        <span style={{ fontSize: "32px", fontWeight: "800", color: zoneInfo.color, lineHeight: 1 }}>
-                          {(analyse.ndvi_moyen ?? 0).toFixed(4)}
-                        </span>
-                        <div style={{ fontSize: "11px", color: "#64748b", textAlign: "right" }}>
-                          <div>min <span style={{ color: "#e74c3c", fontWeight: "600" }}>{(analyse.ndvi_min??0).toFixed(4)}</span></div>
-                          <div>max <span style={{ color: "#10b981", fontWeight: "600" }}>{(analyse.ndvi_max??0).toFixed(4)}</span></div>
-                        </div>
-                      </div>
-                      <NdviBar value={analyse.ndvi_moyen} />
-                    </div>
-
-                    {/* Surfaces par zone */}
-                    <div style={{ border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px" }}>
-                      <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "16px", textTransform: "uppercase" }}>Répartition des surfaces</div>
-                      {[
-                        { z:1, ha: analyse.zone1_ha ?? 0 },
-                        { z:2, ha: analyse.zone2_ha ?? 0 },
-                        { z:3, ha: analyse.zone3_ha ?? 0 },
-                      ].map(({ z, ha }) => {
-                        const total = ((analyse.zone1_ha??0)+(analyse.zone2_ha??0)+(analyse.zone3_ha??0)) || 1;
-                        const pct = ((ha/total)*100).toFixed(1);
-                        return (
-                          <div key={z} style={{ marginBottom: "12px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                              <span style={{ fontSize: "12px", fontWeight: "600", color: "#334155" }}>{ZONES[z].label}</span>
-                              <span style={{ fontSize: "12px", fontWeight: "700", color: ZONES[z].color }}>{Number(ha).toFixed(0)} ha ({pct}%)</span>
-                            </div>
-                            <div style={{ background: "#f1f5f9", borderRadius: "4px", height: "6px" }}>
-                              <div style={{ width: `${pct}%`, height: "100%", background: ZONES[z].color, borderRadius: "4px" }}/>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Prescription Engrais */}
-                    {prescription && (
-                      <div style={{ border: "1px solid #e2e8f0", padding: "16px", borderRadius: "8px", background: "#f8fafc" }}>
-                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "12px", textTransform: "uppercase" }}>Prescription Engrais IA</div>
-                        {[
-                          { label: "Type engrais", value: prescription.prescription?.type_engrais },
-                          { label: "Dose recommandée", value: prescription.prescription?.dose },
-                          { label: "Âge palmier", value: prescription.prescription?.age_palmier ? `${prescription.prescription.age_palmier} ans` : "—" },
-                        ].map(({ label, value }) => (
-                          <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px" }}>
-                            <span style={{ color: "#64748b" }}>{label}</span>
-                            <span style={{ color: "#0f172a", fontWeight: "700" }}>{value||"—"}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Colonne de Droite : Images Satellites */}
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Cartographie Spatiale</div>
-                    
-                    {/* Boutons de sélection d'image */}
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      {IMAGES_TYPES.map(img => (
-                        <button key={img.key} onClick={() => setImgActive(img.key)} style={{
-                          flex: 1, 
-                          background: imgActive === img.key ? "#0e5033" : "#f8fafc",
-                          border: `1px solid ${imgActive === img.key ? "#0e5033" : "#e2e8f0"}`,
-                          color: imgActive === img.key ? "white" : "#475569",
-                          borderRadius: "8px", padding: "12px", cursor: "pointer", transition: "all 0.2s"
-                        }}>
-                          <div style={{ fontSize: "20px", marginBottom: "4px" }}>{img.icon}</div>
-                          <div style={{ fontSize: "12px", fontWeight: "700" }}>{img.label}</div>
-                          <div style={{ fontSize: "10px", opacity: 0.8 }}>{img.desc}</div>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Affichage de l'image */}
-                    <div style={{ background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden", flex: 1, minHeight: "350px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {imgUrl ? (
-                        <img src={imgUrl} alt={imgActive} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}/>
-                      ) : (
-                        <div style={{ color: "#64748b", fontSize: "13px", textAlign: "center" }}>
-                          <div style={{ fontSize: "32px", marginBottom: "8px" }}>🛰️</div>
-                          Image non disponible
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Infos supplémentaires */}
-                    <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                      {[
-                        { label: "Source des données", value: "Sentinel-2 SR" },
-                        { label: "Images analysées", value: `${analyse.nb_images??"—"} scènes fusionnées` },
-                        { label: "Période", value: analyse.periode??"N/A" },
-                        { label: "Résolution spatiale", value: "10m × 10m par pixel" },
-                      ].map(({ label, value }) => (
-                        <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", fontSize: "12px" }}>
-                          <span style={{ color: "#64748b" }}>{label}</span>
-                          <span style={{ color: "#0f172a", fontWeight: "600" }}>{value}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          )}
         </div>
       </main>
     </div>
