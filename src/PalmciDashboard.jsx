@@ -131,12 +131,25 @@ export default function PalmciDashboard() {
   const images = data.images;
   const prescription = data.prescription;
 
-  let surfaceA = 44000, zonesC = "8 sites", econ = "15.4%", parcellesS = "17%";
+  let surfaceA = 44000, zonesC = "8 sites", parcellesS = "17%";
+  let infosGee = {
+    images: 12,
+    resolution: "10m × 10m",
+    source: "Sentinel-2 SR",
+    periode: "Nov → Fév"
+  };
+
   if (analyse) {
     surfaceA = Math.round((analyse.zone1_ha||0) + (analyse.zone2_ha||0) + (analyse.zone3_ha||0));
     zonesC = Math.round(analyse.zone1_ha || 0) + " ha";
     parcellesS = (surfaceA > 0 ? ((analyse.zone3_ha || 0) / surfaceA * 100) : 0).toFixed(1) + "%";
-    econ = (surfaceA > 0 ? (((analyse.zone3_ha||0)*0.5 + (analyse.zone2_ha||0)*0.2) / surfaceA * 100) : 0).toFixed(1) + "%";
+    
+    infosGee = {
+      images: analyse.nb_images || "—",
+      resolution: "10m × 10m",
+      source: "Sentinel-2 SR",
+      periode: analyse.periode || "N/A"
+    };
   }
 
   const zone = analyse?.zone ?? 2;
@@ -202,11 +215,14 @@ export default function PalmciDashboard() {
               <div style={{ height: "3px", background: "#ef4444", width: "30%", marginTop: "12px", borderRadius: "2px" }}/>
             </div>
 
-            <div className="kpi-card">
-              <div className="kpi-header">ÉCONOMIES D'ENGRAIS <TrendingDown size={16} color="#10b981" /></div>
-              <div className="kpi-value">{econ}</div>
-              <div className="kpi-sub" style={{ color: "#10b981" }}>Économie potentielle IA</div>
-              <div style={{ height: "3px", background: "#10b981", width: "80%", marginTop: "12px", borderRadius: "2px" }}/>
+            <div className="kpi-card" style={{ paddingBottom: "12px" }}>
+              <div className="kpi-header">INFORMATIONS GEE <MapIcon size={16} color="#6366f1" /></div>
+              <div style={{ fontSize: "12px", color: "#475569", marginTop: "8px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}><span>Images analysées:</span> <strong style={{color:"#0f172a"}}>{infosGee.images}</strong></div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}><span>Résolution:</span> <strong style={{color:"#0f172a"}}>{infosGee.resolution}</strong></div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}><span>Source:</span> <strong style={{color:"#0f172a"}}>{infosGee.source}</strong></div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}><span>Date:</span> <strong style={{color:"#0f172a"}}>{infosGee.periode}</strong></div>
+              </div>
             </div>
 
             <div className="kpi-card">
@@ -335,22 +351,6 @@ export default function PalmciDashboard() {
                           ))}
                         </div>
                       )}
-
-                      {/* 5. INFORMATIONS */}
-                      <div style={{ border: "1px solid #e2e8f0", background: "#f8fafc", padding: "16px", borderRadius: "8px" }}>
-                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#0e5033", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>INFORMATIONS</div>
-                        {[
-                          { label: "Images analysées", value: `${analyse.nb_images??"—"} images` },
-                          { label: "Résolution", value: "10m × 10m" },
-                          { label: "Source", value: "Sentinel-2 SR" },
-                          { label: "Période GEE", value: analyse.periode??"N/A" },
-                        ].map(({ label, value }) => (
-                          <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px" }}>
-                            <span style={{ color: "#64748b", fontWeight: "500" }}>{label}</span>
-                            <span style={{ color: "#0f172a", fontWeight: "700" }}>{value}</span>
-                          </div>
-                        ))}
-                      </div>
 
                     </div>
 
