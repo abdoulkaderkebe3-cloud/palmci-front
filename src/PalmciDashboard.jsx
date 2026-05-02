@@ -125,7 +125,7 @@ export default function PalmciDashboard() {
     a.click();
   };
 
-  const envoyerApp = () => alert(`Prescriptions envoyées aux agents terrains !`);
+  const envoyerApp = () => alert(`Les coordonnées géospatiales des zones de "Stress Sévère" et "Stress Modéré" du site PALMCI ${nomSite} ont été envoyées avec succès sur les applications mobiles des agriculteurs !`);
 
   const analyse = data.analyse;
   const images = data.images;
@@ -168,7 +168,6 @@ export default function PalmciDashboard() {
         <nav className="sidebar-nav">
           <div className="nav-item active"><LayoutDashboard size={18}/> Tableau de bord</div>
           <div className="nav-item"><MapIcon size={18}/> Cartographie GEE</div>
-          <div className="nav-item"><BarChart2 size={18}/> Analytiques</div>
           <div className="nav-item"><Users size={18}/> Agriculteurs</div>
           <div className="nav-item"><History size={18}/> Historique</div>
           <div className="nav-item"><Settings size={18}/> Paramètres</div>
@@ -344,8 +343,7 @@ export default function PalmciDashboard() {
                           <div style={{ fontSize: "11px", fontWeight: "700", color: "#0e5033", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>PRESCRIPTION ENGRAIS</div>
                           {[
                             { label: "Type engrais", value: prescription.prescription?.type_engrais },
-                            { label: "Dose recommandée", value: prescription.prescription?.dose || analyse.dose },
-                            { label: "Âge palmier", value: prescription.prescription?.age_palmier ? `${prescription.prescription.age_palmier} ans` : "—" },
+                            { label: "Dose recommandée", value: prescription.prescription?.dose || analyse.dose }
                           ].map(({ label, value }) => (
                             <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px" }}>
                               <span style={{ color: "#64748b", fontWeight: "500" }}>{label}</span>
@@ -394,7 +392,7 @@ export default function PalmciDashboard() {
 
                         <div style={{ textAlign: "center", marginTop: "16px" }}>
                           <button className="btn-primary" onClick={envoyerApp} style={{ padding: "16px", fontSize: "15px", width: "100%" }}>
-                            <Send size={18} /> Transmettre au terrain
+                            <Send size={18} /> Envoyer positions aux Agriculteurs
                           </button>
                         </div>
 
