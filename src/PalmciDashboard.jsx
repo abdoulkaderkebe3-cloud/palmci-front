@@ -1,17 +1,42 @@
 import { useState, useRef, useEffect } from "react";
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
+import L from 'leaflet';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
 
 const API = "https://palmci-ndvi-api.onrender.com";
 
 const SITES_MAP = [
-  { id: 1, nom: "EHANIA",     x: 71, y: 55 },
-  { id: 2, nom: "TOUMANGUIE", x: 64, y: 48 },
-  { id: 3, nom: "IROBO",      x: 47, y: 50 },
-  { id: 4, nom: "BOUBO",      x: 36, y: 40 },
-  { id: 5, nom: "BLIDOUBA",   x: 12, y: 62 },
-  { id: 6, nom: "IBOKE",      x: 14, y: 60 },
-  { id: 7, nom: "GBAPET",     x: 11, y: 52 },
-  { id: 8, nom: "NEKA",       x: 12, y: 63 },
+  { id: 1, nom: "EHANIA",     lat: 5.282, lon: -3.013 },
+  { id: 2, nom: "TOUMANGUIE", lat: 5.367, lon: -3.376 },
+  { id: 3, nom: "IROBO",      lat: 5.338, lon: -4.787 },
+  { id: 4, nom: "BOUBO",      lat: 5.650, lon: -5.302 },
+  { id: 5, nom: "BLIDOUBA",   lat: 4.552, lon: -7.482 },
+  { id: 6, nom: "IBOKE",      lat: 4.600, lon: -7.447 },
+  { id: 7, nom: "GBAPET",     lat: 4.972, lon: -7.511 },
+  { id: 8, nom: "NEKA",       lat: 4.565, lon: -7.512 },
 ];
+
+function MapFlyTo({ siteActuel }) {
+  const map = useMap();
+  useEffect(() => {
+    if (siteActuel) {
+      const site = SITES_MAP.find(s => s.id === siteActuel);
+      if (site) map.flyTo([site.lat, site.lon], 12, { duration: 1.5 });
+    } else {
+      map.flyTo([5.345, -5.0], 7, { duration: 1.5 });
+    }
+  }, [siteActuel, map]);
+  return null;
+}
 
 const ZONES = {
   1: { label: "Stress sévère",    dose: "DOSE MAX",      color: "#e74c3c", glow: "#e74c3c55" },
@@ -56,39 +81,35 @@ function CarteCoteIvoire({ siteActuel, onSelectSite }) {
   return (
     <div style={{ position:"relative", background:"#060e06", borderRadius:16, border:"1px solid #1b5e20", overflow:"hidden" }}>
       <div style={{ position:"relative", paddingBottom:"75%" }}>
-        <iframe
-          title="Côte d'Ivoire"
-          src="https://maps.google.com/maps?q=Cote+d+Ivoire&t=&z=7&ie=UTF8&iwloc=&output=embed"
-          style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%", border:"none", opacity:0.75 }}
-        />
-        <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom,rgba(6,14,6,.25),rgba(6,14,6,.05))", pointerEvents:"none" }}/>
+        <div style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%" }}>
+          <MapContainer center={[5.345, -5.0]} zoom={7} style={{ height: "100%", width: "100%" }} zoomControl={false}>
+            <TileLayer
+              url="http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+              attribution="&copy; Google Earth"
+            />
+            {SITES_MAP.map(site => (
+              <CircleMarker 
+                key={site.id} 
+                center={[site.lat, site.lon]} 
+                radius={siteActuel === site.id ? 10 : 6}
+                color={siteActuel === site.id ? "#4caf50" : "#1b5e20"}
+                fillColor={siteActuel === site.id ? "#4caf50" : "#0e5033"}
+                fillOpacity={0.8}
+                weight={2}
+                eventHandlers={{ click: () => onSelectSite(site.id, site.nom) }}
+              >
+                <Popup>
+                  <div style={{ color: "#333", fontWeight: "bold", fontSize: "12px", fontFamily:"'Courier New',monospace" }}>PALMCI {site.nom}</div>
+                </Popup>
+              </CircleMarker>
+            ))}
+            <MapFlyTo siteActuel={siteActuel} />
+          </MapContainer>
+        </div>
         
-        {SITES_MAP.map(site => {
-          const actif = siteActuel?.toString() === site.id.toString();
-          return (
-            <div key={site.id} onClick={() => onSelectSite(site.id, site.nom)}
-              style={{ position:"absolute", left:`${site.x}%`, top:`${site.y}%`, transform:"translate(-50%,-50%)", cursor:"pointer", zIndex:20 }}>
-              {actif && <>
-                <div style={{ position:"absolute", inset:-12, borderRadius:"50%", border:"2px solid #4caf50", animation:"pulse 1.5s ease-out infinite", opacity:.7 }}/>
-                <div style={{ position:"absolute", inset:-6, borderRadius:"50%", border:"1px solid #66bb6a", animation:"pulse 1.5s ease-out infinite .3s", opacity:.5 }}/>
-              </>}
-              <div style={{
-                width:actif?22:14, height:actif?22:14, borderRadius:"50%",
-                background:actif?"#4caf50":"#1b5e20", border:`2px solid ${actif?"#a5d6a7":"#2e7d32"}`,
-                display:"flex", alignItems:"center", justifyContent:"center", fontSize:actif?11:8,
-                boxShadow:actif?"0 0 16px #4caf5099":"0 2px 8px rgba(0,0,0,.5)", transition:"all .3s"
-              }}></div>
-              <div style={{
-                position:"absolute", top:"100%", left:"50%", transform:"translateX(-50%)", marginTop:4,
-                background:actif?"#1b5e20":"rgba(0,0,0,.85)", border:`1px solid ${actif?"#4caf50":"#1b5e20"}`,
-                color:actif?"#a5d6a7":"#4caf50", fontSize:8, fontWeight:800, padding:"2px 6px",
-                borderRadius:4, whiteSpace:"nowrap", letterSpacing:1
-              }}>{site.nom}</div>
-            </div>
-          );
-        })}
+        <div style={{ position:"absolute", inset:0, background:"rgba(6,14,6,0.15)", pointerEvents:"none", zIndex: 400 }}/>
 
-        <div style={{ position:"absolute", top:12, left:12, background:"rgba(0,0,0,.88)", border:"1px solid #2e7d32", borderRadius:8, padding:"8px 14px", zIndex:10 }}>
+        <div style={{ position:"absolute", top:12, left:12, background:"rgba(0,0,0,.88)", border:"1px solid #2e7d32", borderRadius:8, padding:"8px 14px", zIndex:1000 }}>
           <div style={{ fontSize:9, letterSpacing:4, color:"#4caf50" }}>GROUPE SIFCA</div>
           <div style={{ fontSize:14, fontWeight:900, color:"#fff" }}>PALMCI — 8 Sites UAI</div>
           <div style={{ fontSize:10, color:"#4caf50", marginTop:2 }}>↓ Cliquez un site pour analyser</div>
@@ -102,7 +123,6 @@ function CarteCoteIvoire({ siteActuel, onSelectSite }) {
           </div>
         ))}
       </div>
-      <style>{`@keyframes pulse{0%{transform:translate(-50%,-50%) scale(1);opacity:.8}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}`}</style>
     </div>
   );
 }
