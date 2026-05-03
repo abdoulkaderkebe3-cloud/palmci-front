@@ -77,6 +77,7 @@ export default function PalmciDashboard() {
   const [data, setData] = useState({});
   const [erreur, setErreur] = useState(null);
   const [imgActive, setImgActive] = useState("ndvi");
+  const [imgLoading, setImgLoading] = useState(false);
   const [showMobileApp, setShowMobileApp] = useState(false);
   const cache = useRef({});
 
@@ -102,6 +103,13 @@ export default function PalmciDashboard() {
       ]);
       
       if (resAnalyse.erreur) throw new Error(resAnalyse.erreur);
+
+      // Si les images ne sont pas en Base64 (vieilles URLs expirées), on les marque comme vides
+      const imgs = resImages?.images || {};
+      if (imgs.rgb && !imgs.rgb.startsWith("data:image")) {
+        // Vieilles URLs GEE expirées : vider pour déclencher un rechargement ultérieur
+        resImages.images = {};
+      }
 
       const result = { analyse: resAnalyse, images: resImages, prescription: resPrescription };
       cache.current[cacheKey] = result;
@@ -412,13 +420,27 @@ export default function PalmciDashboard() {
                           ))}
                         </div>
 
-                        <div style={{ background: "white", border: "1px solid #cbd5e1", borderRadius: "8px", overflow: "hidden", flex: 1, minHeight: "400px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          {imgUrl ? (
-                            <img src={imgUrl} alt={imgActive} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}/>
+                        <div style={{ background: "white", border: "1px solid #cbd5e1", borderRadius: "8px", overflow: "hidden", flex: 1, minHeight: "400px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                          {imgUrl && imgUrl.startsWith("data:image") ? (
+                            <>
+                              {imgLoading && (
+                                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", zIndex: 10 }}>
+                                  <div className="spinner" style={{ width: "32px", height: "32px" }}/>
+                                </div>
+                              )}
+                              <img 
+                                src={imgUrl} 
+                                alt={imgActive} 
+                                onLoad={() => setImgLoading(false)}
+                                onLoadStart={() => setImgLoading(true)}
+                                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                              />
+                            </>
                           ) : (
-                            <div style={{ color: "#64748b", fontSize: "14px", textAlign: "center" }}>
+                            <div style={{ color: "#64748b", fontSize: "14px", textAlign: "center", padding: "24px" }}>
                               <div style={{ fontSize: "36px", marginBottom: "12px" }}>🛰️</div>
-                              Image en cours de génération...
+                              <div style={{ fontWeight: "700", marginBottom: "8px" }}>Image en cours de génération</div>
+                              <div style={{ fontSize: "12px", opacity: 0.7 }}>Le serveur télécharge et convertit l'image satellite GEE.<br/>Cela peut prendre 30–60 secondes la première fois.</div>
                             </div>
                           )}
                         </div>
