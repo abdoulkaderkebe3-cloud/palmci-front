@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaf
 import { 
   LayoutDashboard, BarChart2, Users, History, Settings,
   AlertTriangle, TrendingDown, CheckCircle, Globe,
-  Send, Download, Map as MapIcon
+  Send, Download, Map as MapIcon, ChevronLeft
 } from "lucide-react";
 
 import L from 'leaflet';
@@ -286,8 +286,16 @@ export default function PalmciDashboard() {
               <div style={{ background: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e2e8f0", animation: "fadeIn 0.5s ease" }}>
                 
                 {/* Header Rapport */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "16px", marginBottom: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #f1f5f9", paddingBottom: "16px", marginBottom: "20px" }}>
                   <div>
+                    <button 
+                      onClick={() => setSiteActuel(null)}
+                      style={{ background: "none", border: "none", padding: "0 0 12px 0", color: "#64748b", display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "600", transition: "color 0.2s" }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = "#0e5033"}
+                      onMouseLeave={(e) => e.currentTarget.style.color = "#64748b"}
+                    >
+                      <ChevronLeft size={16} /> Retour à la liste des sites
+                    </button>
                     <h2 style={{ margin: 0, fontSize: "20px", color: "#0f172a" }}>Analyse Détaillée : PALMCI {nomSite}</h2>
                     <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#64748b" }}>Supervision satellite et recommandations agronomiques</p>
                   </div>
