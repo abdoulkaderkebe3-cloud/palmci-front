@@ -238,8 +238,8 @@ export default function PalmciDashboard() {
 
           <div className="content-split" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             
-            {/* Map (Prend toute la largeur si pas de site, sinon reste grande) */}
-            <div className="map-section" style={{ height: siteActuel ? "350px" : "500px", flex: "none" }}>
+            {/* Map (Hauteur réduite selon la demande) */}
+            <div className="map-section" style={{ height: siteActuel ? "280px" : "380px", flex: "none" }}>
               <div className="map-header">
                 <div style={{ fontWeight: 600, fontSize: "14px", color: "#0f172a" }}>Cartographie Google Earth Hybride</div>
                 {!siteActuel && <div style={{ fontSize: "12px", color: "#64748b" }}>Sélectionnez un marqueur pour afficher l'analyse détaillée ci-dessous.</div>}
@@ -259,6 +259,27 @@ export default function PalmciDashboard() {
                 </MapContainer>
               </div>
             </div>
+
+            {/* LISTE DES SITES (quand aucun site n'est sélectionné) */}
+            {!siteActuel && (
+              <div style={{ background: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e2e8f0", animation: "fadeIn 0.4s ease" }}>
+                <div style={{ fontSize: "16px", fontWeight: "700", color: "#0f172a", marginBottom: "6px" }}>Liste des sites PALMCI</div>
+                <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "20px" }}>Sélectionnez un site ci-dessous ou sur la carte pour charger l'analyse GEE.</div>
+                
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "12px" }}>
+                  {SITES_MAP.map(site => (
+                    <div key={site.id} 
+                         className="site-item"
+                         onClick={() => chargerDonnees(site.id, site.nom, anneeActive)}>
+                      <div>
+                        <div className="site-item-name">PALMCI {site.nom}</div>
+                        <div className="site-item-sub">Cliquez pour analyser le NDVI</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* RAPPORT DETAILLE (Apparaît en bas quand un site est sélectionné, exactement comme le 1er dashboard) */}
             {siteActuel && (
