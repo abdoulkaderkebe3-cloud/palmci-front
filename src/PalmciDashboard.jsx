@@ -44,7 +44,7 @@ const IMAGES_TYPES = [
   { key: "infrarouge", label: "INFRAROUGE", icon: "🔴", desc: "Fausses couleurs" },
 ];
 
-const ANNEES = ["2023", "2024", "2025"];
+const ANNEES = ["2023", "2024", "2025", "2026"];
 
 function MapFlyTo({ siteActuel }) {
   const map = useMap();
@@ -72,7 +72,7 @@ function NdviBar({ value }) {
 export default function PalmciDashboard() {
   const [siteActuel, setSiteActuel] = useState(null);
   const [nomSite, setNomSite] = useState("");
-  const [anneeActive, setAnneeActive] = useState("2025");
+  const [anneeActive, setAnneeActive] = useState("2026");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState({});
   const [erreur, setErreur] = useState(null);
